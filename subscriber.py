@@ -1,5 +1,6 @@
 import sys
 import zmq
+import broker
 
 #Socket to talk to server
 context = zmq.Context()

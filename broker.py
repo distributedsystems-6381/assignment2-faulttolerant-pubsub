@@ -3,6 +3,14 @@ from random import randrange
 
 context = zmq.Context()
 
+publishers: {
+    "topic1": ""
+}
+
+subscribers: {
+    "topic1": "sub_ip"
+}
+
 # This is a proxy. We create the XSUB and XPUB endpoints
 print ("This is proxy: creating xsub and xpubsockets")
 xsubsocket = context.socket(zmq.XSUB)
@@ -17,3 +25,10 @@ xpubsocket.bind ("tcp://*:5556")
 # We are just relaying things internally.
 # This blocks
 zmq.proxy (xsubsocket, xpubsocket)
+
+
+def register_pub(topic, pub_identity):
+    print("pub details")
+
+def register_sub(topic, sub_identity):
+    print("sub details")
