@@ -14,7 +14,7 @@ while True:
     message = str(temp)
     middleware.publish(topic, message)
 
-    humidity = randrange (20, 101)   
+    humidity = randrange (20, 25)   
     topic = "humidity" 
     message = str(humidity)
     middleware.publish(topic, message)
