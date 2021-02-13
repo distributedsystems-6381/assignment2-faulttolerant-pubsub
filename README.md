@@ -1,9 +1,9 @@
 # Distributed System(6381) Assignment1-pubsub
-##### group members
+##### Group members
 Satish & Tito
 ##### Pre-requisites
-Mininet - https://github.com/mininet/mininet
-Zeromq
+Mininet - https://github.com/mininet/mininet <br />
+Zeromq <br />
 Python3
 
 
