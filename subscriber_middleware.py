@@ -1,36 +1,41 @@
 import sys
 import zmq
-import subscriber_app
 
+class SubscriberMiddleware():
+    def __init__ (self, publisher_ip, port):
+        self.publisherIp = publisher_ip
+        self.port = port        
+        self.notifyCallback = None
+        self.sockets = []
+        self.registered_topics = None                   
 
-publisherIp = sys.argv[1] if len(sys.argv) > 1 else "localhost"   
-port = "5555"
-server_address = "tcp://{}:{}".format(publisherIp, port)
+    def register(self, topics, callback = None):
+        self.registered_topics = topics
+        self.notifyCallback = callback
+        self.configure()
 
-print("Connecting weather server at address: {}".format(server_address))
-context = zmq.Context()
-socket_temp = context.socket(zmq.SUB)
-socket_temp.connect(server_address)
-socket_temp.setsockopt_string(zmq.SUBSCRIBE, "temp:2")
+    def configure(self):
+        print("configuring the subscriber middleware")        
+        server_address = "tcp://{}:{}".format(self.publisherIp, self.port)
 
-socket_humidity = context.socket(zmq.SUB)
-socket_humidity.connect(server_address)
-socket_humidity.setsockopt_string(zmq.SUBSCRIBE, "humidity:21")
+        print("Connecting weather server at address: {}".format(server_address))
+        context = zmq.Context()
 
-# Initialize poll set
-poller = zmq.Poller()
-poller.register(socket_temp, zmq.POLLIN)
-poller.register(socket_humidity, zmq.POLLIN)
+        for topic in self.registered_topics:
+            socket = context.socket(zmq.SUB)
+            socket.connect(server_address)
+            socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+            self.sockets.append(socket)        
+        
+        poller = zmq.Poller()
+        for socket in self.sockets:
+            poller.register(socket, zmq.POLLIN)
 
-while True:
-    sockets = dict(poller.poll())
-    if (socket_temp in sockets and sockets[socket_temp] == zmq.POLLIN):
-        message = socket_temp.recv_string()
-        topic, messagedata = message.split(":")
-        subscriber_app.notify(topic, messagedata)
-
-    if (socket_humidity in sockets and sockets[socket_humidity] == zmq.POLLIN):
-        message = socket_humidity.recv_string()
-        topic, messagedata = message.split(":")
-        subscriber_app.notify(topic, messagedata)
+        while True:
+            sockets = dict(poller.poll())
+            for socket in sockets:
+                message = socket.recv_string()
+                topic, messagedata = message.split(":")                
+                if self.notifyCallback != None:
+                    self.notifyCallback(topic, messagedata) 
                 

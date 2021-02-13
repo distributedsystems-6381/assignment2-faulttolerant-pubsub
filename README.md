@@ -1,10 +1,17 @@
-# assignment1-pubsub
+# Distributed System(6381) Assignment1-pubsub
 ##### group members
-To run this application
-1. On a Ubuntu 20.04 machine, simulate a network mininet by running the command "sudo mn -x --topo=tree,fanout=3,depth=2"
-2. On one the mininet host run "ifconfig" and take a note of IPv4 address of the host machine e.g. 10.0.0.2
-3. On 10.0.0.2 host, the command prompt run "Python3 publisher_app.py", this will create the publisher app to publish the topics and data
-4. On another host, example 10.0.0.7, start the subscriber by running "python3 subscriber_middleware.py 10.0.0.2", connecting to publisher server running on host   with the Ip 10.0.0.2
+Satish & Tito
+##### Pre-requisites
+Mininet - https://github.com/mininet/mininet
+Zeromq
+Python3
 
-Note - The publisher app publishes messages to 2 topics, temperature and humidity by calling the publish(topic, message) API on the publisher middleware. The subscriber middleware calls notify(topic, message) API on the subscriber app when it receives the messages for the topics it's interested in.
+
+To run this applcation:
+1. On a Ubuntu 20.04 machine, simulate a mininet network by running the command "sudo mn -x --topo=tree,fanout=3,depth=2"
+2. On one of the mininet host, e.g. h2, run "ifconfig" and take a note of IPv4 address of the host machine e.g. 10.0.0.2
+3. On 10.0.0.2 host, on the command prompt run e.g. "python3 publisher_app.py 6666", this will create the publisher app to publish the topics and data to port 6666. The publisher publishes "temp" and "humidity" topic. The data for the "temp" topic is generated randomly in the range of interger 1 to 5, and the date for the "himidity" topic is randomly generated in the range of interger 20 to 25.
+4. On another host e.g. h7, start the subscriber by running e.g. "python3 subscriber_app.py 10.0.0.2 6666 temp:1 humidity:20", connecting to publisher server running on host with the Ip 10.0.0.2 on port 6666 with "temp:1" and "humidity:20" as the topic filter
+
+Note - The publisher app publishes messages to 2 topics, temperature(temp) and humidity by calling the publish(topic, message) API on the publisher middleware. The subscriber registers the topics and a callback method to the subscriber middleware to receive the data for the registered topics, as and when the subscriber middleware receives topic data from the publisher, it call passes the data to subscriber app by calling the registered callback function.
 
