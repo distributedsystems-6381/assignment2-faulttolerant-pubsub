@@ -2,22 +2,57 @@
 ##### Group members
 Satish & Tito
 ##### Pre-requisites
-Mininet - https://github.com/mininet/mininet <br />
-Zeromq <br />
-Python3
+   - [Ubuntu 20.04 machine](https://ubuntu.com/download/desktop)
+   - [Mininet](https://github.com/mininet/mininet)
+   - [ZeroMQ](https://zeromq.org/)
+   - [Python3](https://www.python.org/)
 
-**To install Zeromq, please run:** <br/>
-sudo apt-get update <br/>
-sudo apt-get install python3-dev python3-pip <br/>
-sudo -H python3 -m pip install --upgrade pyzmq 
+**To install python3 and Zeromq, please run:**
+```
+sudo apt-get update && \
+sudo apt-get install python3-dev python3-pip && \
+sudo -H python3 -m pip install --upgrade pyzmq
+```
 
+***To run the publisher and subscriber:***
+1. Change directories to your workspace and clone this project 
+   ```
+   cd ~/workspace
+   git clone https://github.com/distributedsystems-6381/assignment1-pubsub
+   cd assignment1-pubsub
+   ```
+1. Simulate a network with mininet by running the following command:
+   - running this command from the directory with the assigment code in it is a convenience, as it will default to opening the XTerm windows to the same directory
+   - the below mininet command will create very basic network topology with a single switch and two hosts
+     ```
+     sudo mn -x --topo=tree,fanout=2,depth=1
+     ```
+1. Access one of the created mininet hosts via an XTerm that pops-up, e.g. h2
+   - from the XTerm find and take note of the host machine's IP
+     ```
+     ifconfig | grep -e "inet\s"
+     ```
+      - 127.0.0.1 is the localhost loopback, the IP will be something similar to 10.0.0.2: 
+   
+   - from the same host run the publisher:
+     ```
+     python3 publisher_app.py 6666
+     ```
+      - This will create the publisher app to publish the topics and data to port 6666 
+      - The publisher publishes "temp" and "humidity" topics
+      - The data for the "temp" topic is generated randomly in the range of integers 1 to 5
+      - The date for the "humidity" topic is randomly generated in the range of integers 20 to 25
 
+1. On another host, e.g. h1, start the subscriber by running
+   - the subscriber will connect to publisher application running on host with the IP 10.0.0.2 on port 6666
+   - "temp:1" and "humidity:20" will be applied as the topic filters
+      ```
+      python3 subscriber_app.py 10.0.0.2 6666 temp:1 humidity:20
+      ```
 
-***To run this applcation:***
-1. On a Ubuntu 20.04 machine, simulate a mininet network by running the command "sudo mn -x --topo=tree,fanout=3,depth=2"
-2. On one of the mininet host, e.g. h2, run "ifconfig" and take a note of IPv4 address of the host machine e.g. 10.0.0.2
-3. On 10.0.0.2 host, on the command prompt run e.g. "python3 publisher_app.py 6666", this will create the publisher app to publish the topics and data to port 6666. The publisher publishes "temp" and "humidity" topic. The data for the "temp" topic is generated randomly in the range of interger 1 to 5, and the date for the "himidity" topic is randomly generated in the range of interger 20 to 25.
-4. On another host e.g. h7, start the subscriber by running e.g. "python3 subscriber_app.py 10.0.0.2 6666 temp:1 humidity:20", connecting to publisher server running on host with the Ip 10.0.0.2 on port 6666 with "temp:1" and "humidity:20" as the topic filter
-
-Note - The publisher app publishes messages to 2 topics, temperature(temp) and humidity by calling the publish(topic, message) API on the publisher middleware. The subscriber registers the topics and a callback method to the subscriber middleware to receive the data for the registered topics, as and when the subscriber middleware receives topic data from the publisher, it call passes the data to subscriber app by calling the registered callback function.
+_**NOTES**_
+   - The publisher app publishes messages to 2 topics
+   - Temperature (temp) and humidity by calling the method `publish(topic, message)` via the publisher middleware API
+   - The subscriber registers the topics via the subscriber middleware API and uses a callback method to receive the data for the registered topics
+   - When the subscriber middleware receives topic data from the publisher related to the subscriber's registered topics, it passes the data to subscriber app by calling the registered callback function
 
