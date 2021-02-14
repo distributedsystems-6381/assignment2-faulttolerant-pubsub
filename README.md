@@ -6,7 +6,8 @@ Mininet - https://github.com/mininet/mininet <br />
 Zeromq <br />
 Python3
 
-To install Zeromq, please run: <br/>
+**To install Zeromq, please run:** <br/>
+
 sudo apt-get update <br/>
 sudo apt-get install python3-dev python3-pip <br/>
 sudo -H python3 -m pip install --upgrade pyzmq 
