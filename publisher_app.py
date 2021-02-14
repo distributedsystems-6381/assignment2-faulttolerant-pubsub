@@ -9,6 +9,7 @@ published_topics = {"temp", "humidity"}
 publisher_port = sys.argv[1] if len(sys.argv) > 1 else "5555"
 middleware = pubmiddleware.PublisherMiddleware(publisher_port)
 
+#provides the topic data for a given topic
 def topic_data_provider(topic):
     if topic == "temp":
         temp = randrange(1, 5)

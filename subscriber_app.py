@@ -13,11 +13,13 @@ print("publisher port: {}".format(publisher_port))
 
 subscribed_topics = []
 
+#any other arguments from 3 onwards are the topic filters
 if len(sys.argv) > 3:
 	for arg in sys.argv[3:]:
 		subscribed_topics.append(arg)
 
 print(subscribed_topics)
 
+#create the SubscriberMiddleware and register the topics of interest and the notify callback function
 sub_middleware = middleware.SubscriberMiddleware(publisher_ip, publisher_port)
 sub_middleware.register(subscribed_topics, notify)
