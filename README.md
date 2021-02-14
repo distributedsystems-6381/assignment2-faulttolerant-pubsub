@@ -7,14 +7,13 @@ Zeromq <br />
 Python3
 
 **To install Zeromq, please run:** <br/>
-
 sudo apt-get update <br/>
 sudo apt-get install python3-dev python3-pip <br/>
 sudo -H python3 -m pip install --upgrade pyzmq 
 
 
 
-To run this applcation:
+***To run this applcation:***
 1. On a Ubuntu 20.04 machine, simulate a mininet network by running the command "sudo mn -x --topo=tree,fanout=3,depth=2"
 2. On one of the mininet host, e.g. h2, run "ifconfig" and take a note of IPv4 address of the host machine e.g. 10.0.0.2
 3. On 10.0.0.2 host, on the command prompt run e.g. "python3 publisher_app.py 6666", this will create the publisher app to publish the topics and data to port 6666. The publisher publishes "temp" and "humidity" topic. The data for the "temp" topic is generated randomly in the range of interger 1 to 5, and the date for the "himidity" topic is randomly generated in the range of interger 20 to 25.
