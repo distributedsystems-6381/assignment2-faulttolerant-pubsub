@@ -21,12 +21,14 @@ class SubscriberMiddleware():
         print("Connecting weather server at address: {}".format(server_address))
         context = zmq.Context()
 
+        #for all of the registered topics create the mq.SUB socket
         for topic in self.registered_topics:
             socket = context.socket(zmq.SUB)
             socket.connect(server_address)
             socket.setsockopt_string(zmq.SUBSCRIBE, topic)
             self.sockets.append(socket)        
         
+        #keep polling for the sockets
         poller = zmq.Poller()
         for socket in self.sockets:
             poller.register(socket, zmq.POLLIN)
@@ -35,7 +37,8 @@ class SubscriberMiddleware():
             sockets = dict(poller.poll())
             for socket in sockets:
                 message = socket.recv_string()
-                topic, messagedata = message.split(":")                
+                topic, messagedata = message.split(":")      
+                #send the received data to the subscriber app using the registered callback          
                 if self.notifyCallback != None:
                     self.notifyCallback(topic, messagedata) 
                 

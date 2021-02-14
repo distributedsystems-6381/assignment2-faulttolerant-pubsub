@@ -51,8 +51,9 @@ sudo -H python3 -m pip install --upgrade pyzmq
       ```
 
 _**NOTES**_
-   - The publisher app publishes messages to 2 topics
+   - By default. the publisher app publishes messages to 2 topics
    - Temperature (temp) and humidity by calling the method `publish(topic, message)` via the publisher middleware API
+   - To publish the data to any other topic, please include the additional topic parameter e.g "python3 publisher_app.py 6666 topic1 topic2", and there will be rnadom data between 100 and 200 will be published for these topics.
    - The subscriber registers the topics via the subscriber middleware API and uses a callback method to receive the data for the registered topics
    - When the subscriber middleware receives topic data from the publisher related to the subscriber's registered topics, it passes the data to subscriber app by calling the registered callback function
 
