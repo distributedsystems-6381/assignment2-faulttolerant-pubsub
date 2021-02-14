@@ -16,6 +16,6 @@ class PublisherMiddleware():
         self.socket.bind(binding_address)
     
     def publish(self, topic, value):
-        print ("publishing topic: {}, data: {}".format(topic, value))       
-        published_data = topic + ":" + str (value)        
+        print ("publishing topic: {}, data: {}".format(topic, value))
+        published_data = topic + ":" + str (value)
         self.socket.send_string(published_data)

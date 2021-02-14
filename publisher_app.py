@@ -5,19 +5,27 @@ import time
 import zmq
 from random import randrange
 
-published_topics = {"temp", "humidity"}
+published_topics = ["temp", "humidity"]
 publisher_port = sys.argv[1] if len(sys.argv) > 1 else "5555"
 middleware = pubmiddleware.PublisherMiddleware(publisher_port)
 
+#any other arguments from 2nd and onwards are the topics to publish the messages
+if len(sys.argv) > 2:
+	for arg in sys.argv[2:]:
+		published_topics.append(arg)
+        
+print("published topics: {}".format(published_topics))
 #provides the topic data for a given topic
 def topic_data_provider(topic):
     if topic == "temp":
         temp = randrange(1, 5)
         return str(temp)
-    if topic == "humidity":
+    elif topic == "humidity":
         humidity = randrange(20, 25)
         return str(humidity)
-
+    else:
+        rand_data = randrange(100, 200)
+        return str(rand_data)
 # keep publishing different topics
 while True: 
     if not published_topics:
