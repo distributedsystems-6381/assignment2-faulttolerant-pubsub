@@ -37,8 +37,10 @@ class SubscriberMiddleware():
             sockets = dict(poller.poll())
             for socket in sockets:
                 message = socket.recv_string()
-                topic, messagedata = message.split(":")      
+                find_val = message.find('#')
+                topic = message[0:find_val]
+                messagedata = message[find_val + 1:]                
                 #send the received data to the subscriber app using the registered callback          
                 if self.notifyCallback != None:
-                    self.notifyCallback(topic, messagedata) 
+                    self.notifyCallback(topic, messagedata)
                 

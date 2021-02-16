@@ -3,11 +3,13 @@ import publisher_middleware as pubmiddleware
 import time
 
 import zmq
-from random import randrange
+from random import randrange    
 
 published_topics = ["temp", "humidity"]
 publisher_port = sys.argv[1] if len(sys.argv) > 1 else "5555"
-middleware = pubmiddleware.PublisherMiddleware(publisher_port)
+broker_ip = sys.argv[2] if len(sys.argv) > 2 else ""
+broker_port = sys.argv[3] if len(sys.argv) > 3 else ""
+middleware = pubmiddleware.PublisherMiddleware(publisher_port, broker_ip, broker_port)
 
 #any other arguments from 2nd and onwards are the topics to publish the messages
 if len(sys.argv) > 2:
@@ -35,4 +37,4 @@ while True:
     for topic in published_topics:
         topic_data = topic_data_provider(topic)
         middleware.publish(topic, topic_data)
-    time.sleep(5)
+    time.sleep(1)
