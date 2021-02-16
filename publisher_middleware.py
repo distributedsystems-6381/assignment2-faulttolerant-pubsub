@@ -8,6 +8,7 @@ class PublisherMiddleware():
 
 
     def configure(self):
+        print("configuring the publisher middleware to use the direct strategy")
         context = zmq.Context()
         binding_address = "tcp://*:%s" % self.port
         # acquire a publisher type socket
