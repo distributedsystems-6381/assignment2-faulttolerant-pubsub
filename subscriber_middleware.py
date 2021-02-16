@@ -1,10 +1,10 @@
 import sys
 import zmq
 
+#publishers has array of ip:port e.g. 10.0.0.1:5000, 10.0.0.2:4000
 class SubscriberMiddleware():
-    def __init__ (self, publisher_ip, port):
-        self.publisherIp = publisher_ip
-        self.port = port        
+    def __init__ (self, publishers):
+        self.publishers = publishers
         self.notifyCallback = None
         self.sockets = []
         self.registered_topics = None                   
@@ -16,17 +16,17 @@ class SubscriberMiddleware():
 
     def configure(self):
         print("configuring the subscriber middleware")        
-        server_address = "tcp://{}:{}".format(self.publisherIp, self.port)
-
-        print("Connecting weather server at address: {}".format(server_address))
         context = zmq.Context()
 
-        #for all of the registered topics create the mq.SUB socket
+        #for all of the registered topics create the mq.SUB socket for all of the publishers
         for topic in self.registered_topics:
-            socket = context.socket(zmq.SUB)
-            socket.connect(server_address)
-            socket.setsockopt_string(zmq.SUBSCRIBE, topic)
-            self.sockets.append(socket)        
+            for publisher in self.publishers:
+                server_address = "tcp://%s" % publisher
+                print("Connecting weather server at address: {}".format(server_address))
+                socket = context.socket(zmq.SUB)
+                socket.connect(server_address)
+                socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+                self.sockets.append(socket)        
         
         #keep polling for the sockets
         poller = zmq.Poller()
