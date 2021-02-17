@@ -59,8 +59,8 @@ _**NOTES**_
 
 ***Test Scenarios:***
 1. One publisher publishing 2 topic, 1 subscriber subscribing 1 topic
-	-On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000>>, this will start publishing "temp" and "humidity" topic
-	-On any other host e.g. 10.0.0.3 starts subscriber subscribing to "temp" topic by running <<python3 subscriber_app.py "10.0.0.1:4000" temp>>. The published and subscribed data will start showing up on the console
+	- On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000>>, this will start publishing "temp" and "humidity" topic
+	- On any other host e.g. 10.0.0.3 starts subscriber subscribing to "temp" topic by running <<python3 subscriber_app.py "10.0.0.1:4000" temp>>. The published and subscribed data will start showing up on the console
 
 1. One publisher publishing 3 topic, 1 subscriber subscribing 2 topic
 	- On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic
