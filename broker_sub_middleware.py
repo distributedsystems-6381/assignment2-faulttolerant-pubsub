@@ -3,9 +3,8 @@ import zmq
 
 
 class BrokerSubMiddleware():
-    def __init__(self, broker_ip, broker_port):
-        self.broker_ip = broker_ip
-        self.broker_port = broker_port
+    def __init__(self, brokers):
+        self.brokers = brokers
         self.notifyCallback = None
         self.sockets = []
         self.registered_topics = None
@@ -17,17 +16,17 @@ class BrokerSubMiddleware():
 
     def configure(self):
         print("configuring the subscriber middleware to use the broker strategy")
-        server_address = "tcp://{}:{}".format(self.broker_ip, self.broker_port)
-
-        print("Connecting to broker at address: {}".format(server_address))
         context = zmq.Context()
 
         # for all of the registered topics set filter
         for topic in self.registered_topics:
-            socket = context.socket(zmq.SUB)
-            socket.connect(server_address)
-            socket.setsockopt_string(zmq.SUBSCRIBE, topic)
-            self.sockets.append(socket)
+            for broker in self.brokers:
+                server_address = "tcp://{}".format(broker)
+                print("Connecting weather server at address: {}".format(server_address))
+                socket = context.socket(zmq.SUB)
+                socket.connect(server_address)
+                socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+                self.sockets.append(socket)
 
         # keep polling for the sockets
         poller = zmq.Poller()
@@ -38,7 +37,9 @@ class BrokerSubMiddleware():
             sockets = dict(poller.poll())
             for socket in sockets:
                 message = socket.recv_string()
-                topic, messagedata = message.split(":")
+                find_val = message.find('#')
+                topic = message[0:find_val]
+                messagedata = message[find_val + 1:]
                 # send the received data to the subscriber app using the registered callback
                 if self.notifyCallback != None:
                     self.notifyCallback(topic, messagedata)

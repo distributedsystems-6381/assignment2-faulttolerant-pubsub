@@ -40,15 +40,14 @@ def direct_messaging_strategy(port, topics):
 
 
 # broker implementation
-def broker_messaging_strategy(ip, topics):
-    broker = brokermiddleware.BrokerPubMiddleware(ip)
+def broker_messaging_strategy(ips_ports, topics):
+    broker = brokermiddleware.BrokerPubMiddleware(ips_ports)
     publish(broker, topics)
 
 
 # create base topics & extract strategy
 publish_topics = ["temp", "humidity"]
 strategy = sys.argv[1] if len(sys.argv) > 1 else print("Please submit valid strategy (direct || broker)")
-broker_ip = sys.argv[2] if len(sys.argv) > 2 else "10.0.0.2"
 
 # add additional topics if provided
 if len(sys.argv) > 3:
@@ -62,5 +61,5 @@ if strategy == "direct":
     publisher_port = sys.argv[2] if len(sys.argv) > 2 else "5555"
     direct_messaging_strategy(publisher_port, publish_topics)
 elif strategy == "broker":
-    broker_ip = sys.argv[2] if len(sys.argv) > 2 else "10.0.0.2"
-    broker_messaging_strategy(broker_ip, publish_topics)
+    broker_ip_port = sys.argv[2] if len(sys.argv) > 2 else "10.0.0.2:5559"
+    broker_messaging_strategy(broker_ip_port, publish_topics)
