@@ -1,23 +1,12 @@
 import sys
-import publisher_middleware as pubmiddleware
 import time
+from random import randrange
+import direct_pub_middleware as dmw
+import broker_pub_middleware as bmw
 
-import zmq
-from random import randrange    
 
-published_topics = ["temp", "humidity"]
-publisher_port = sys.argv[1] if len(sys.argv) > 1 else "5555"
-broker_ip = sys.argv[2] if len(sys.argv) > 2 else ""
-broker_port = sys.argv[3] if len(sys.argv) > 3 else ""
-middleware = pubmiddleware.PublisherMiddleware(publisher_port, broker_ip, broker_port)
-
-#any other arguments from 2nd and onwards are the topics to publish the messages
-if len(sys.argv) > 2:
-	for arg in sys.argv[2:]:
-		published_topics.append(arg)
-        
-print("published topics: {}".format(published_topics))
-#provides the topic data for a given topic
+# METHODS
+# provides the topic data for a given topic
 def topic_data_provider(topic):
     if topic == "temp":
         temp = randrange(1, 5)
@@ -28,13 +17,49 @@ def topic_data_provider(topic):
     else:
         rand_data = randrange(100, 200)
         return str(rand_data)
-# keep publishing different topics
-while True: 
-    if not published_topics:
-        print("No topic to publish") 
-        break
 
-    for topic in published_topics:
-        topic_data = topic_data_provider(topic)
-        middleware.publish(topic, topic_data)
-    time.sleep(1)
+
+# publish using specified strategy
+def publish(strategy, topics):
+    # keep publishing different topics
+    while True:
+        if not topics:
+            print("No topic to publish")
+            break
+
+        for topic in topics:
+            topic_data = topic_data_provider(topic)
+            strategy.publish(topic, topic_data)
+        time.sleep(5)
+
+
+# direct implementation
+def direct_messaging_strategy(port, topics):
+    subscriber = dmw.DirectPubMiddleware(port)
+    publish(subscriber, topics)
+
+
+# broker implementation
+def broker_messaging_strategy(ips_ports, topics):
+    broker = bmw.BrokerPubMiddleware(ips_ports)
+    publish(broker, topics)
+
+
+# create base topics & extract strategy
+publish_topics = ["temp", "humidity"]
+strategy = sys.argv[1] if len(sys.argv) > 1 else print("Please submit valid strategy (direct || broker)")
+
+# add additional topics if provided
+if len(sys.argv) > 3:
+    for arg in sys.argv[3:]:
+        publish_topics.append(arg)
+
+    print("topics to publish: {}".format(publish_topics))
+
+# initiate messaging based on which strategy is submitted
+if strategy == "direct":
+    publisher_port = sys.argv[2] if len(sys.argv) > 2 else "5555"
+    direct_messaging_strategy(publisher_port, publish_topics)
+elif strategy == "broker":
+    broker_ip_port = sys.argv[2] if len(sys.argv) > 2 else "10.0.0.2:5559"
+    broker_messaging_strategy(broker_ip_port, publish_topics)
