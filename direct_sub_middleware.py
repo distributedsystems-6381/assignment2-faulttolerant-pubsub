@@ -2,7 +2,7 @@ import sys
 import zmq
 
 
-class SubscriberMiddleware():
+class DirectSubMiddleware():
     def __init__(self, publishers):
         self.publishers = publishers
         self.notifyCallback = None

@@ -4,7 +4,7 @@ from datetime import datetime
 import host_ip_provider
 
 
-class PublisherMiddleware():
+class DirectPubMiddleware():
     def __init__(self, port):
         self.port = port
         self.socket = None

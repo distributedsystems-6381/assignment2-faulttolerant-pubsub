@@ -1,8 +1,8 @@
 import sys
 import time
 from random import randrange
-import publisher_middleware as pubmiddleware
-import broker_pub_middleware as brokermiddleware
+import direct_pub_middleware as dmw
+import broker_pub_middleware as bmw
 
 
 # METHODS
@@ -35,13 +35,13 @@ def publish(strategy, topics):
 
 # direct implementation
 def direct_messaging_strategy(port, topics):
-    middleware = pubmiddleware.PublisherMiddleware(port)
-    publish(middleware, topics)
+    subscriber = dmw.DirectPubMiddleware(port)
+    publish(subscriber, topics)
 
 
 # broker implementation
 def broker_messaging_strategy(ips_ports, topics):
-    broker = brokermiddleware.BrokerPubMiddleware(ips_ports)
+    broker = bmw.BrokerPubMiddleware(ips_ports)
     publish(broker, topics)
 
 

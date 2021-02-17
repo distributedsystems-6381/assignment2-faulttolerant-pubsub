@@ -4,8 +4,8 @@ from datetime import datetime
 import threading
 
 import host_ip_provider
-import subscriber_middleware as directmiddleware
-import broker_sub_middleware as brokermiddleware
+import direct_sub_middleware as dmw
+import broker_sub_middleware as bmw
 
 
 # capture subscriber IP for use in logger_function
@@ -37,14 +37,14 @@ def notify(topic, message):
 # direct implementation
 def direct_messaging_strategy(pubs, topics):
     # create the SubscriberMiddleware and register the topics of interest and the notify callback function
-    direct_middleware = directmiddleware.SubscriberMiddleware(pubs)
-    direct_middleware.register(topics, notify)
+    publisher = dmw.DirectSubMiddleware(pubs)
+    publisher.register(topics, notify)
 
 
 def broker_messaging_strategy(brokers, topics):
     # create the BrokerSubscriberMiddleware and register the topics of interest and the notify callback function
-    broker_middleware = brokermiddleware.BrokerSubMiddleware(brokers)
-    broker_middleware.register(topics, notify)
+    broker = bmw.BrokerSubMiddleware(brokers)
+    broker.register(topics, notify)
 
 
 # create topics array, extract strategy, extract publishers
