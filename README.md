@@ -63,14 +63,15 @@ _**NOTES**_
 	-On any other host e.g. 10.0.0.3 starts subscriber subscribing to "temp" topic by running <<python3 subscriber_app.py "10.0.0.1:4000" temp>>. The published and subscribed data will start showing up on the console
 
 1. One publisher publishing 3 topic, 1 subscriber subscribing 2 topic
-	-On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic
-	-On any other host e.g. 10.0.0.3 starts subscriber subscribing to "temp" and "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000" temp topic1>>. The published and subscribed data will start showing up on the console	
+	- On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic
+	- On any other host e.g. 10.0.0.3 starts subscriber subscribing to "temp" and "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000" temp topic1>>. The published and subscribed data will start showing up on the console	
 1. Two publisher publishing 3 topic, 1 subscriber subscribing 1 topic
-	-On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic, on another host 10.0.0.2 start running another publisher publishing on "temp", "humidity" and "topic1" by running <<python3 publisher_app.py 5000 topic1>>
-	-On any other host e.g. 10.0.0.3 starts subscriber subscribing to "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000,10.0.0.2:5000" topic1>>. The published and subscribed data will start showing up on the console
+	- On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic, on another host 10.0.0.2 start running another publisher publishing on "temp", "humidity" and "topic1" by running <<python3 publisher_app.py 5000 topic1>>
+	- On any other host e.g. 10.0.0.3 starts subscriber subscribing to "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000,10.0.0.2:5000" topic1>>. The published and subscribed data will start showing up on the console
 
 1. Two publisher publishing 4 topic, 1 subscriber subscribing 2 topic
-	-On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic, on another host 10.0.0.2 start running another publisher publishing on "temp", "humidity", "topic1" and "topic2" by running <<python3 publisher_app.py 5000 topic1 topic2>>
-	-On any other host e.g. 10.0.0.3 starts subscriber subscribing to "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000,10.0.0.2:5000" topic1 topic2>>. The published and subscribed data will start showing up on the console
+	- On host 10.0.0.1, start publisher by running <<python3 publisher_app.py 4000 topic1>>, this will start publishing "topic1", "temp" and "humidity" topic, on another host 10.0.0.2 start running another publisher publishing on "temp", "humidity", "topic1" and "topic2" by running <<python3 publisher_app.py 5000 topic1 topic2>>
+	- On any other host e.g. 10.0.0.3 starts subscriber subscribing to "topic1" topic by running <<python3 subscriber_app.py "10.0.0.1:4000,10.0.0.2:5000" topic1 topic2>>. The published and subscribed data will start showing up on the console
 	
-***Logging and Graph:*** - Running subscriber app generates a comma seperated log text file at the root of the project containing publisher_ip, subscriber_ip, message_id and time taken in milliseconds to receive the message from publisher. The graph and it's test data for the above test scenarios are located in the folder /perf-data-graphs
+***Logging and Graph:*** 
+   Running subscriber app generates a comma seperated log text file at the root of the project containing publisher_ip, subscriber_ip, message_id and time taken in milliseconds to receive the message from publisher. The graph and it's test data for the above test scenarios are located in the folder /perf-data-graphs
