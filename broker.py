@@ -1,34 +1,40 @@
 import zmq
-from random import randrange
-
-context = zmq.Context()
-
-publishers: {
-    "topic1": ""
-}
-
-subscribers: {
-    "topic1": "sub_ip"
-}
-
-# This is a proxy. We create the XSUB and XPUB endpoints
-print ("This is proxy: creating xsub and xpubsockets")
-xsubsocket = context.socket(zmq.XSUB)
-xsubsocket.bind("tcp://*:5555")
-
-xpubsocket = context.socket (zmq.XPUB)
-xpubsocket.setsockopt(zmq.XPUB_VERBOSE, 1)
-xpubsocket.bind ("tcp://*:5556")
-
-# This proxy is needed to connect the two sockets.
-# But what this means is that we cannot do anything here.
-# We are just relaying things internally.
-# This blocks
-zmq.proxy (xsubsocket, xpubsocket)
+import sys
 
 
-def register_pub(topic, pub_identity):
-    print("pub details")
+def run_broker(listening_port, publishing_port):
+    print("starting ZMQ broker")
+    try:
+        context = zmq.Context(1)
+        # Socket facing clients
+        frontend = context.socket(zmq.SUB)
+        frontend.bind("tcp://*:{}".format(listening_port))
+        print("configured to listen to publisher interfaces via port {}".format(listening_port))
 
-def register_sub(topic, sub_identity):
-    print("sub details")
+        frontend.setsockopt_string(zmq.SUBSCRIBE, "")
+
+        # Socket facing services
+        backend = context.socket(zmq.PUB)
+        backend.bind("tcp://*:{}".format(publishing_port))
+        print("configured to publish to registered subscribers via port {}".format(publishing_port))
+
+        zmq.device(zmq.FORWARDER, frontend, backend)
+        print("configuration complete")
+    except Exception as e:
+        print(e)
+        print("bringing down ZMQ device")
+    finally:
+        pass
+        frontend.close()
+        backend.close()
+        context.term()
+
+
+# extract broker config
+listen = sys.argv[1] if len(sys.argv) > 1 else print("Please submit valid port")
+publish = sys.argv[2] if len(sys.argv) > 2 else print("Please submit valid port")
+if publish == listen:
+    print("Listening port and Publishing port cannot be the same")
+else:
+    run_broker(listen, publish)
+
