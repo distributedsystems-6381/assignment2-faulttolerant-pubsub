@@ -107,6 +107,14 @@ _**NOTES**_
         - by default the publisher produces messages for the topics `temp` and `humidity`
         - the publisher will connect to broker application at IP 10.0.0.2 on port 5559
 
+***All the below test scenarios assume running on mininet***
+    
+- as previously mentioned, use this command to create a VNet with mininet:
+    ```
+    sudo mn -x --topo=tree,fanout=3,depth=2
+    ```
+- the available hosts will be h1, h2, h3, ... , h9 with corresponding IPs 10.0.0.1, 10.0.0.2, 10.0.0.3, ... , 10.0.0.9
+
 ***Test Scenarios for Direct Implementation:***
 1. One publisher publishing 2 topics, 1 subscriber subscribing to 1 topic
 	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct 4000`, this will start publishing "temp" and "humidity" topics
