@@ -54,10 +54,6 @@ publishers_ip_port = sys.argv[2] if len(sys.argv) > 2 else "localhost:5555"
 print("publisher ip: {}".format(publishers_ip_port))
 publishers = publishers_ip_port.split(',')
 
-# extract publisher/broker info
-# ip = sys.argv[2] if len(sys.argv) > 2 else print("Please submit valid IP")
-# port = sys.argv[3] if len(sys.argv) > 3 else print("Please submit valid port")
-
 # add additional topics if provided
 if len(sys.argv) > 3:
     for arg in sys.argv[3:]:
