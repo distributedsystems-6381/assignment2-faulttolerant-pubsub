@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["10.0.0.1:4000,10.0.0.2:5000", "-topic1", "topic2"]
+            "args": ["direct", "10.0.0.6:7000", "5000", "topic1"]
         }
     ]
 }

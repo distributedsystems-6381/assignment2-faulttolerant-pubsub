@@ -6,11 +6,60 @@ import threading
 import host_ip_provider
 import direct_sub_middleware as dmw
 import broker_sub_middleware as bmw
+import zmq
 
-
+#e.g args "python3 subscriber_app.py direct 10.0.0.6:7000 topic1 topic2"
 # capture subscriber IP for use in logger_function
 subscriber_ip = host_ip_provider.get_host_ip()
 
+#Extract the strategy to discover and disseminate the messages
+strategy = ""
+if len(sys.argv) > 1:    
+    strategy = sys.argv[1]
+
+if strategy != "direct" and strategy != "broker":
+    print("Please submit valid strategy (direct || broker)")
+    sys.exit()
+
+#Get broker ip and port, passed in arg[2] as ip:port e.g. 10.0.0.5:4000
+broker_ip_port = ""
+if len(sys.argv) > 2:
+    broker_ip_port = sys.argv[2] 
+
+if broker_ip_port == "":
+    print("No broker ip:port provided")
+    sys.exit()
+
+#Add topics of interests
+subscribed_topics = []
+if len(sys.argv) > 3:
+    for arg in sys.argv[3:]:
+        subscribed_topics.append(arg)
+    print("Topics to subscribe:{}".format(subscribed_topics))
+
+if len(subscribed_topics) == 0:
+    print("Please provide topics to subscribe)")
+    sys.exit()
+
+publishers = []
+#publishers for direct message based strategy
+if strategy == "direct":
+    context = zmq.Context()
+    print("Retrieving topic publishers from broker running at ip:port => {}".format(broker_ip_port))
+    broker_socket = context.socket(zmq.REQ)
+    broker_socket.connect("tcp://{}".format(broker_ip_port))   
+    for topic in subscribed_topics:
+        broker_socket.send_string(topic)
+        message = broker_socket.recv_string()
+        print("Message received from broker: {}".format(message))
+        topic_publishers = message.split(',')
+        for topic_publisher in topic_publishers:
+           publishers.append(topic_publisher)
+#publishers for broker based message strategy - this will be broker ip:port
+else:
+    publishers = broker_ip_port.split(',')
+
+print(publishers)
 
 def logger_function(message):
     topic_data, message_id, message_sent_at_timestamp, publisher_ip = message.split("#")
@@ -46,24 +95,10 @@ def broker_messaging_strategy(brokers, topics):
     broker = bmw.BrokerSubMiddleware(brokers)
     broker.register(topics, notify)
 
-
-# create topics array, extract strategy, extract publishers
-subscribed_topics = []
-strategy = sys.argv[1] if len(sys.argv) > 1 else print("Please submit valid strategy (direct || broker)")
-publishers_ip_port = sys.argv[2] if len(sys.argv) > 2 else "localhost:5555"
-print("publisher ip: {}".format(publishers_ip_port))
-publishers = publishers_ip_port.split(',')
-
-# add additional topics if provided
-if len(sys.argv) > 3:
-    for arg in sys.argv[3:]:
-        subscribed_topics.append(arg)
-    print("topics to subscribe:\n {}".format(subscribed_topics))
-
 # initiate messaging based on which strategy is submitted
 if strategy == "direct" and publishers is not None:
     direct_messaging_strategy(publishers, subscribed_topics)
-elif strategy == "broker" and publishers is not None:
+elif strategy == "broker" and publishers is not None:    
     broker_messaging_strategy(publishers, subscribed_topics)
 else:
     print("Check that all necessary values have been submitted")

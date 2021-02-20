@@ -27,6 +27,20 @@ sudo -H python3 -m pip install --upgrade pyzmq
      ```
       sudo mn -x --topo=tree,fanout=3,depth=2
      ```
+1. Access one of the created mininet hosts via an XTerm that pops-up, e.g. h8
+   - from the XTerm find and take note of the host machine's IP
+     ```
+     ifconfig | grep -e "inet\s"
+     ```
+      - `127.0.0.1` is the localhost loopback, the IP will be something similar to `10.0.0.8`: 
+   
+   - from the same host run the lame broker:
+      ```
+     python3 lamebroker.py {port_on_which_lamebroker_will_run}
+     ```
+     ```
+     e.g. python3 lamebroker.py 8000
+     ``` 
 1. Access one of the created mininet hosts via an XTerm that pops-up, e.g. h2
    - from the XTerm find and take note of the host machine's IP
      ```
@@ -35,25 +49,34 @@ sudo -H python3 -m pip install --upgrade pyzmq
       - `127.0.0.1` is the localhost loopback, the IP will be something similar to `10.0.0.2`: 
    
    - from the same host run the publisher:
+      ```
+     python3 publisher_app.py direct {lame_broker_ip:port} {publisher_port} topic1 topic2 etc.
      ```
-     python3 publisher_app.py direct 6666
      ```
-      - This will create the publisher app to publish the topics and data to port 6666 
-      - The publisher publishes "temp" and "humidity" topics
+     e.g. python3 publisher_app.py direct "10.0.0.8:8000" 2000 topic1 topic2
+     ```
+      - This will register the publisher with the lame-broker with 10.0.0.8:8000 of the publishers and the publishing topics
+      - This will create the publisher app to publish the topics and data to port 2000
+      - The publisher publishes "temp", "humidity", "topic1" and "topic2" topics
       - The data for the "temp" topic is generated randomly in the range of integers 1 to 5
-      - The date for the "humidity" topic is randomly generated in the range of integers 20 to 25
+      - The data for the "humidity" topic is randomly generated in the range of integers 20 to 25
+      - The data for the "topic1" and "topic2" is randomly generated in the range of integers 100 to 200
 
 1. On another host, e.g. h1, start the subscriber by running:
       ```
-      python3 subscriber_app.py direct "10.0.0.2:6666" temp humidity
+      python3 subscriber_app.py direct {lame_broker_ip:port} temp humidity
       ```
-   - the subscriber will connect to publisher application running on host with the IP 10.0.0.2 on port 6666
+      ```
+      e.g. python3 subscriber_app.py direct "10.0.0.8:8000" temp humidity
+      ```
+   - The subscriber will connect to the lamebroker on 10.0.0.8:8000 to get the ip:port of the publishers publishing on these topics
+   - The subscriber will connect to publishers application running on publising hosts host with the IP 10.0.0.2 on port 2000
    - "temp" and "humidity" will be applied as the topic filters
     
 _**NOTES**_
    - By default. the publisher app publishes messages to 2 topics
    - Temperature (temp) and humidity by calling the method `publish(topic, message)` via the publisher middleware API
-   - To publish the data to any other topic, please include the additional topic parameter e.g "python3 publisher_app.py 6666 topic1 topic2", and there will be rnadom data between 100 and 200 will be published for these topics.
+   - To publish the data to any other topics, please include the additional topic parameter e.g "python3 publisher_app.py "10.0.0.8:8000" 2000 topic1 topic2", and there will be rnadom data between 100 and 200 will be published for these topics.
    - The subscriber registers the topics via the subscriber middleware API and uses a callback method to receive the data for the registered topics
    - When the subscriber middleware receives topic data from the publisher related to the subscriber's registered topics, it passes the data to subscriber app by calling the registered callback function
 
@@ -117,27 +140,31 @@ _**NOTES**_
 
 ***Test Scenarios for Direct Implementation:***
 1. One publisher publishing 2 topics, 1 subscriber subscribing to 1 topic
-	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct 4000`, this will start publishing "temp" and "humidity" topics
-	- On any other host, e.g. 10.0.0.3, start a subscriber that listens for the "temp" topic by running `python3 subscriber_app.py direct "10.0.0.1:4000" temp` 
+	- On host 10.0.0.8 start the lamebroker on port 8000 by running `python3 lamebroker.py 8000`
+	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct "10.0.0.8:8000" 1000`, this will start publishing "temp" and "humidity" topics
+	- On any other host, e.g. 10.0.0.3, start a subscriber that listens for the "temp" topic by running `python3 subscriber_app.py direct "10.0.0.8:8000" temp` 
         - The published and subscribed data will start showing up on the XTerm console
 
 1. One publisher publishing 3 topics, 1 subscriber subscribing to 2 topics
-	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct 4000 topic1`, this will start publishing "topic1", "temp" and "humidity" topics
-	- On any other host e.g. 10.0.0.3 start a subscriber that listens for "temp" and "topic1" topics by running `python3 subscriber_app.py direct "10.0.0.1:4000" temp topic1`
+	- On host 10.0.0.8 start the lamebroker on port 8000 by running `python3 lamebroker.py 8000`
+	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct "10.0.0.8:8000" 1000 topic1`, this will start publishing "topic1", "temp" and "humidity" topics
+	- On any other host e.g. 10.0.0.3 start a subscriber that listens for "temp" and "topic1" topics by running `python3 subscriber_app.py direct "10.0.0.8:8000" temp topic1`
         - The published and subscribed data will start showing up on the XTerm console
     
 1. Two publisher publishing 3 topics, 1 subscriber subscribing to 1 topic
-	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct 4000 topic1`, this will start publishing "topic1", "temp" and "humidity" topics
-    - On another host, e.g. 10.0.0.2, run another publisher with the topics "temp", "humidity" and "topic1" via `python3 publisher_app.py direct 5000 topic1`
-	- On any other host, e.g. 10.0.0.3, start a subscriber that listens for "topic1" from both publishers by running `python3 subscriber_app.py direct "10.0.0.1:4000,10.0.0.2:5000" topic1`
+	- On host 10.0.0.8 start the lamebroker on port 8000 by running `python3 lamebroker.py 8000`
+	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct "10.0.0.8:8000" 1000 topic1`, this will start publishing "topic1", "temp" and "humidity" topics
+    - On another host, e.g. 10.0.0.2, run another publisher with the topics "temp", "humidity" and "topic1" via `python3 publisher_app.py direct "10.0.0.8:8000" 2000 topic1`
+	- On any other host, e.g. 10.0.0.3, start a subscriber that listens for "topic1" from both publishers by running `python3 subscriber_app.py direct "10.0.0.8:8000" topic1`
         - The published and subscribed data will start showing up on the XTerm console
 
 1. Two publisher publishing 4 topics, 1 subscriber subscribing to 2 topics
-	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct 4000 topic1`
+	- On host 10.0.0.8 start the lamebroker on port 8000 by running `python3 lamebroker.py 8000`
+	- On host 10.0.0.1, start a publisher by running `python3 publisher_app.py direct "10.0.0.8:8000" 1000 topic1`
         - this will start publishing the topics "temp", "humidity" and "topic1"
-    - On another host, e.g. 10.0.0.2 start running another publisher `python3 publisher_app.py direct 5000 topic1 topic2`
+    - On another host, e.g. 10.0.0.2 start running another publisher `python3 publisher_app.py direct "10.0.0.8:8000" 2000 topic1 topic2`
         - this will start publishing the topics "temp", "humidity", "topic1" and "topic2"
-	- On any other host, e.g. 10.0.0.3, start a subscriber `python3 subscriber_app.py "10.0.0.1:4000,10.0.0.2:5000" topic1 topic2` 
+	- On any other host, e.g. 10.0.0.3, start a subscriber `python3 subscriber_app.py "10.0.0.8:8000" topic1 topic2` 
         - this will subscribe to "topic1"
         - the published and subscribed data will start showing up on the XTerm console
 
