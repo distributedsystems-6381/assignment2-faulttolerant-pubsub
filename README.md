@@ -36,10 +36,10 @@ sudo -H python3 -m pip install --upgrade pyzmq
    
    - from the same host run the lame broker:
       ```
-     python3 lamebroker.py direct {port_on_which_lamebroker_will_run}
+     python3 lamebroker.py {port_on_which_lamebroker_will_run}
      ```
      ```
-     e.g. python3 lamebroker.py direct 8000
+     e.g. python3 lamebroker.py 8000
      ``` 
 1. Access one of the created mininet hosts via an XTerm that pops-up, e.g. h2
    - from the XTerm find and take note of the host machine's IP
