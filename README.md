@@ -63,7 +63,7 @@ sudo -H python3 -m pip install --upgrade pyzmq
       - The data for the "topic1" and "topic2" is randomly generated in the range of integers 100 to 200
 
 1. On another host, e.g. h1, start the subscriber by running:
-       ```
+      ```
       python3 subscriber_app.py direct {lame_broker_ip:port} temp humidity
       ```
       ```
