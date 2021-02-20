@@ -2,9 +2,8 @@ import zmq
 import time
 import sys
 
+#args - python3 lamebroker.py 9000
 topic_publishers = {}
-topic_publishers["topic1"] = "10.0.0.1:4000,10.0.0.2:4000"
-topic_publishers["topic2"] = "10.0.0.2:4000"
 
 def message_processor(message):
     msg_parts = message.split('#')
@@ -32,7 +31,7 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:%s" % port)
 
-print('lame broker started')
+print('Lame broker started on port:{}'.format(port))
 
 while True:
     #  Wait for next request from client

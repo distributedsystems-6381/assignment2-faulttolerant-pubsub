@@ -6,7 +6,10 @@ import direct_pub_middleware as dmw
 import broker_pub_middleware as bmw
 import host_ip_provider
 
-
+# direct args => python3 publisher_app.py direct {lamebroker_ip:port} {publishing_port} topic1 topic2
+#       e.g. "python3 publisher_app.py direct "10.0.0.6:7000" 5000 topic1 topic2"
+# broker args => "python3 publisher_app.py broker {message_broker_ip:port} {publishing_port} topic1 topic2
+#       e.g. "python3 publisher_app.py broker "10.0.0.6:7000" topic1 topic2"
 # METHODS
 # provides the topic data for a given topic
 def topic_data_provider(topic):
@@ -50,11 +53,12 @@ def broker_messaging_strategy(ips_ports, topics):
 # create base topics & extract strategy
 publish_topics = ["temp", "humidity"]
 strategy = sys.argv[1] if len(sys.argv) > 1 else print("Please submit valid strategy (direct || broker)")
+
 if strategy != 'direct' and strategy != 'broker':
     print("Please submit valid strategy (direct || broker)")
     sys.exit()
 
-#python3 publisher.py direct "10.0.0.6:4000" 5000
+#Register publisher ip and port to the lamebroker
 publisher_port = ""
 if strategy == "direct":
     broker_ip_port = ""
@@ -78,10 +82,9 @@ if strategy == "direct":
     print("Connecting to broker at ip:port=> {}".format(broker_ip_port))
     broker_socket = context.socket(zmq.REQ)
     broker_socket.connect("tcp://{}".format(broker_ip_port))
-
     publisher_ip_port = host_ip_provider.get_host_ip() + ":" + publisher_port
-
     register_publisher_data_to_broker = publisher_ip_port + '#'
+
     counter = 1
     for topic in publish_topics:
         if counter < len(publish_topics):
