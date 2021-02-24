@@ -3,14 +3,14 @@ import csv
 from datetime import datetime
 import threading
 
-import host_ip_provider
-import direct_sub_middleware as dmw
-import broker_sub_middleware as bmw
+import src.host_ip_provider as hip
+import src.direct_sub_middleware as dmw
+import src.broker_sub_middleware as bmw
 import zmq
 
 #e.g args "python3 subscriber_app.py direct 10.0.0.6:7000 topic1 topic2"
 # capture subscriber IP for use in logger_function
-subscriber_ip = host_ip_provider.get_host_ip()
+subscriber_ip = hip.get_host_ip()
 
 #Extract the strategy to discover and disseminate the messages
 strategy = ""

@@ -2,9 +2,9 @@ import sys
 import time
 import zmq
 from random import randrange
-import direct_pub_middleware as dmw
-import broker_pub_middleware as bmw
-import host_ip_provider
+import src.direct_pub_middleware as dmw
+import src.broker_pub_middleware as bmw
+import src.host_ip_provider as hip
 
 # direct args => python3 publisher_app.py direct {lamebroker_ip:port} {publishing_port} topic1 topic2
 #       e.g. "python3 publisher_app.py direct "10.0.0.6:7000" 5000 topic1 topic2"
@@ -82,7 +82,7 @@ if strategy == "direct":
     print("Connecting to broker at ip:port=> {}".format(broker_ip_port))
     broker_socket = context.socket(zmq.REQ)
     broker_socket.connect("tcp://{}".format(broker_ip_port))
-    publisher_ip_port = host_ip_provider.get_host_ip() + ":" + publisher_port
+    publisher_ip_port = hip.get_host_ip() + ":" + publisher_port
     register_publisher_data_to_broker = publisher_ip_port + '#'
 
     counter = 1
