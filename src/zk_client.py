@@ -4,9 +4,8 @@ import logging as logger
 import kazoo.client as cl
 import kazoo.exceptions as ke
 import host_ip_provider as hip
+import constants as const
 
-LEADER_ELECTION_ROOT_ZNODE = "/leaderelection"
-BROKER_NODE_PREFIX = "/broker_"
 
 print(sys.argv)
 try:
@@ -21,25 +20,29 @@ try:
         if ehmemeral_node_path.endswith(nodes[0]):
             print("I'm the leader")
         else:
-            present_broker_node = LEADER_ELECTION_ROOT_ZNODE +'/' + nodes[0]
+            present_broker_node = const.LEADER_ELECTION_ROOT_ZNODE +'/' + nodes[0]
             data, _ = zk.get(present_broker_node)
             print("current broker ip:port = {}".format(data.decode("utf-8")))
             
-            emphemeral_node = "broker_" + ehmemeral_node_path[len(ehmemeral_node_path)-10:]
-            this_broker_node_index = nodes.index(emphemeral_node)
+            this_broker_node_name = "broker_" + ehmemeral_node_path[len(ehmemeral_node_path)-10:]
+            this_broker_node_index = nodes.index(this_broker_node_name)
+            #watch for the broker with the next lower index e.g. broker "broker_0000000003" will watch "broker_0000000002"
+            #broker "broker_0000000002" will watch "broker_0000000001"
+            #and broker "broker_0000000001" will not watch anyone, as it's the leader
             node_to_watch_index = this_broker_node_index - 1
-            node_being_followed = LEADER_ELECTION_ROOT_ZNODE+'/'+ nodes[node_to_watch_index]
+            node_being_followed = const.LEADER_ELECTION_ROOT_ZNODE+'/'+ nodes[node_to_watch_index]
             zk.get(node_being_followed, watch=watch_func)  
 
     def watch_func(event):
         print("node changed:{}".format(event))
         if event.type == "DELETED":
-            childrens = zk.get_children(LEADER_ELECTION_ROOT_ZNODE)
+            childrens = zk.get_children(const.LEADER_ELECTION_ROOT_ZNODE)
             try_elect_leader(childrens)
    
     print(hip.get_host_ip().encode('utf-8'))
-    ehmemeral_node_path = zk.create(LEADER_ELECTION_ROOT_ZNODE + BROKER_NODE_PREFIX, hip.get_host_ip().encode('utf-8') , makepath = True, ephemeral=True, sequence=True)
-    broker_nodes = zk.get_children(LEADER_ELECTION_ROOT_ZNODE)
+    ehmemeral_node_path = zk.create(const.LEADER_ELECTION_ROOT_ZNODE + const.BROKER_NODE_PREFIX, hip.get_host_ip().encode('utf-8') , makepath = True, ephemeral=True, sequence=True)
+    broker_nodes = zk.get_children(const.LEADER_ELECTION_ROOT_ZNODE)
+    #if there're less than 2 broker left in the system, then fault tolerant quorum cannot be formed
     if len(broker_nodes) < 2:
         print("Not enough broker to form a quorum, minimum needed broker = 2")
         sys.exit()
