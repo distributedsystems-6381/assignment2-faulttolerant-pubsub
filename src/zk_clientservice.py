@@ -58,6 +58,17 @@ class ZkClientService():
     def set_node_value(self, node_path, node_value):
         if self.kzclient.exists(node_path):       
             self.kzclient.set(node_path, node_value.encode("utf-8"))
+        else:
+            self.kzclient.create(node_path,node_value.encode('utf-8'), makepath=True)
+    
+    def get_broker(self, broker_root_node_path):
+        if self.kzclient.exists(broker_root_node_path): 
+            child_nodes = self.kzclient.get_children(broker_root_node_path)
+            child_nodes = child_nodes.sort()
+            active_broker_node = child_nodes[0]
+            return self.get_node_value(active_broker_node)
+        else:
+            return "" 
 
     def stop_kzclient(self):
         self.kzclient.stop()

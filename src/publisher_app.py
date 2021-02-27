@@ -5,6 +5,8 @@ from random import randrange
 import src.direct_pub_middleware as dmw
 import src.broker_pub_middleware as bmw
 import src.host_ip_provider as hip
+import zk_clientservice as kzcl
+import constants as const
 
 # direct args => python3 publisher_app.py direct {lamebroker_ip:port} {publishing_port} topic1 topic2
 #       e.g. "python3 publisher_app.py direct "10.0.0.6:7000" 5000 topic1 topic2"
@@ -12,6 +14,13 @@ import src.host_ip_provider as hip
 #       e.g. "python3 publisher_app.py broker "10.0.0.6:7000" topic1 topic2"
 # METHODS
 # provides the topic data for a given topic
+'''
+    1. Args {messaging_strategy: direct or broker} {zookeepr ip:port} {publishing_port - applicable for direct}  {topics}
+       e.g. For Direct messaging strategy
+       python3 publisher_app.py direct "127.0.0.1:2181" 4000 topic1 topic2 topic3.....topicn
+       Broker messaging strategy
+       python3 publisher_app.py broker "127.0.0.1:2181" topic1 topic2 topic3.....topicn
+'''
 def topic_data_provider(topic):
     if topic == "temp":
         temp = randrange(1, 5)
@@ -26,7 +35,7 @@ def topic_data_provider(topic):
 
 # publish using specified strategy
 def publish(strategy, topics):
-    # keep publishing different topics
+    # keep publishing different topics every 5 seconds
     while True:
         if not topics:
             print("No topic to publish")
@@ -59,14 +68,15 @@ if strategy != 'direct' and strategy != 'broker':
     sys.exit()
 
 #Register publisher ip and port to the lamebroker
+kzclient = kzcl.ZkClientService()
 publisher_port = ""
 if strategy == "direct":
-    broker_ip_port = ""
+    zookeeper_ip_port = ""
     if len(sys.argv) > 2:
-        broker_ip_port = sys.argv[2]         
+        zookeeper_ip_port = sys.argv[2]         
 
-    if broker_ip_port == "":
-        print("No broker ip:port provided")
+    if zookeeper_ip_port == "":
+        print("No zookeeper ip:port provided, terminating publisher app :(")
         sys.exit()
     
     #Add additional topics if provided for the direct strategy
@@ -77,25 +87,20 @@ if strategy == "direct":
         for arg in sys.argv[4:]:
             publish_topics.append(arg)
 
-    #Register the publisher to the broker
-    context = zmq.Context()
-    print("Connecting to broker at ip:port=> {}".format(broker_ip_port))
-    broker_socket = context.socket(zmq.REQ)
-    broker_socket.connect("tcp://{}".format(broker_ip_port))
+    #Register the publisher to the zookeeper
     publisher_ip_port = hip.get_host_ip() + ":" + publisher_port
-    register_publisher_data_to_broker = publisher_ip_port + '#'
+    print("Connecting to zookeeper at ip:port=> {}".format(zookeeper_ip_port))
+    register_publisher_data_to_zookeeper = publisher_ip_port + '#'
 
     counter = 1
     for topic in publish_topics:
         if counter < len(publish_topics):
-            register_publisher_data_to_broker = register_publisher_data_to_broker + topic + ','
+            register_publisher_data_to_zookeeper = register_publisher_data_to_zookeeper + topic + ','
         else:
-            register_publisher_data_to_broker = register_publisher_data_to_broker + ',' + topic
+            register_publisher_data_to_zookeeper = register_publisher_data_to_zookeeper + ',' + topic
 
-    print("Registering publisher to the broker: {}".format(register_publisher_data_to_broker))
-    broker_socket.send_string(register_publisher_data_to_broker)
-    message = broker_socket.recv_string()
-    print("Message received from broker: {}".format(message))
+    print("Registering publisher to the broker: {}".format(register_publisher_data_to_zookeeper))
+    kzclient.create_node(const.PUBLISHERS_ROOT_PATH + const.PUBLISHERS_NODE_PREFIX, register_publisher_data_to_zookeeper, False, True)
 else:
     #Add additional topics if provided for the broker strategy
     if len(sys.argv) > 3:

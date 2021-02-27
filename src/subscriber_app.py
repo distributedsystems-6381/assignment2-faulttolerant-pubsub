@@ -7,8 +7,17 @@ import src.host_ip_provider as hip
 import src.direct_sub_middleware as dmw
 import src.broker_sub_middleware as bmw
 import zmq
+import zk_clientservice as kzcl
+import constants as const
 
-#e.g args "python3 subscriber_app.py direct 10.0.0.6:7000 topic1 topic2"
+'''
+ args python3 {direct or broker} {zookeeper_ip:port} 
+ 1. Get current active broker_ip:port from zookeeper
+ 2. Watch for the active broker node in zookeeper
+ 3. Retrieve publishers for the topics of the ineterest
+ 4. Connect to the publishers to get the topic for the direct message
+'''
+#e.g args "python3 subscriber_app.py direct 127.0.0.1:2181 topic1 topic2"
 # capture subscriber IP for use in logger_function
 subscriber_ip = hip.get_host_ip()
 
@@ -21,13 +30,13 @@ if strategy != "direct" and strategy != "broker":
     print("Please submit valid strategy (direct || broker)")
     sys.exit()
 
-#Get broker ip and port, passed in arg[2] as ip:port e.g. 10.0.0.5:4000
-broker_ip_port = ""
+#Get zookeeper ip and port, passed in arg[2] as ip:port e.g. 127.0.0.1:2181
+zookeeper_ip_port = ""
 if len(sys.argv) > 2:
-    broker_ip_port = sys.argv[2] 
+    zookeeper_ip_port = sys.argv[2] 
 
-if broker_ip_port == "":
-    print("No broker ip:port provided")
+if zookeeper_ip_port == "":
+    print("No zookeeper ip:port provided, exiting subscriber application.")
     sys.exit()
 
 #Add topics of interests
@@ -41,23 +50,41 @@ if len(subscribed_topics) == 0:
     print("Please provide topics to subscribe)")
     sys.exit()
 
+
+def watch_broker_func():
+    print("Broker node changed")
+    get_publishers()
+
+kzclient = kzcl.ZkClientService()
 publishers = []
-#publishers for direct message based strategy
-if strategy == "direct":
+broker_ip_port = ""
+#get the current active broker ip:port from the zookeeper
+def get_publishers():
+    active_broker_ip_port = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
+    if active_broker_ip_port == broker_ip_port:
+        print("There is no change in active broker)
+        return
+
+    broker_ip_port = active_broker_ip_port
+    if broker_ip_port == "":
+        print("No active broker is in the system, exiting the system")
+        sys.exit()
+
+    #Retrieve message publishers from the active broker
+    print("Retrieving topic publishers from active broker running at ip:port => {}".format(zookeeper_ip_port))  
     context = zmq.Context()
-    print("Retrieving topic publishers from broker running at ip:port => {}".format(broker_ip_port))
     broker_socket = context.socket(zmq.REQ)
-    broker_socket.connect("tcp://{}".format(broker_ip_port))   
+    broker_socket.connect("tcp://{}".format(broker_ip_port))
     for topic in subscribed_topics:
         broker_socket.send_string(topic)
         message = broker_socket.recv_string()
         print("Message received from broker: {}".format(message))
         topic_publishers = message.split(',')
         for topic_publisher in topic_publishers:
-           publishers.append(topic_publisher)
-#publishers for broker based message strategy - this will be broker ip:port
-else:
-    publishers = broker_ip_port.split(',')
+            publishers.append(topic_publisher)
+    kzclient.watch_node(const.LEADER_ELECTION_ROOT_ZNODE, watch_broker_func)
+
+get_publishers()
 
 print(publishers)
 
