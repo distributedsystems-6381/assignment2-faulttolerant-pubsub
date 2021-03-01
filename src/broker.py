@@ -1,5 +1,8 @@
 import zmq
 import sys
+import zk_clientservice as kzcl
+import zk_leaderelector as le
+import constants as const
 
 
 def run_broker(listening_port, publishing_port):
@@ -36,5 +39,11 @@ publish = sys.argv[2] if len(sys.argv) > 2 else print("Please submit valid port"
 if publish == listen:
     print("Listening port and Publishing port cannot be the same")
 else:
+    #Try to elect a broker leader
+    zk_client_svc = kzcl.ZkClientService()
+    leader_elector = le.LeaderEelector(zk_client_svc, const.LEADER_ELECTION_ROOT_ZNODE, const.BROKER_NODE_PREFIX)
+    #The broker node value for broker strategy e.g. node_path = /leaderelection/broker_0000000001, node_value = broker_ip:publishing_port,listening_port
+    # e.g node_value = 10.0.0.5:2000,3000
+    leader_elector.try_elect_leader(None, publish + "," + listen)
     run_broker(listen, publish)
 

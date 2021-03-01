@@ -67,22 +67,23 @@ if strategy != 'direct' and strategy != 'broker':
     print("Please submit valid strategy (direct || broker)")
     sys.exit()
 
+zookeeper_ip_port = ""
+if len(sys.argv) > 2:
+    zookeeper_ip_port = sys.argv[2]         
+
+if zookeeper_ip_port == "":
+    print("No zookeeper ip:port provided, terminating publisher app :(")
+    sys.exit()
+
 #Register publisher ip and port to the lamebroker
 kzclient = kzcl.ZkClientService()
 publisher_port = ""
-if strategy == "direct":
-    zookeeper_ip_port = ""
-    if len(sys.argv) > 2:
-        zookeeper_ip_port = sys.argv[2]         
-
-    if zookeeper_ip_port == "":
-        print("No zookeeper ip:port provided, terminating publisher app :(")
-        sys.exit()
-    
-    #Add additional topics if provided for the direct strategy
+if strategy == "direct":    
+    #get the publisher port
     if len(sys.argv) > 3:
         publisher_port = sys.argv[3]
 
+    #Add additional topics if provided for the direct strategy
     if len(sys.argv) > 4:
         for arg in sys.argv[4:]:
             publish_topics.append(arg)
@@ -113,5 +114,9 @@ print("Topics to publish: {}".format(publish_topics))
 if strategy == "direct":   
     direct_messaging_strategy(publisher_port, publish_topics)
 elif strategy == "broker":
-    broker_ip_port = sys.argv[2] if len(sys.argv) > 2 else "10.0.0.2:5559"
+    #Get the broker_ip_port for the broker strategy
+    active_broker_node_value = kzcl.ZkClientService().get_broker(const.LEADER_ELECTION_ROOT_ZNODE)    
+    broker_ip = active_broker_node_value.split(':')[0]
+    broker_listening_port = active_broker_node_value.split(':')[1].split(',')[1]
+    broker_ip_port = broker_ip + ":" + broker_listening_port
     broker_messaging_strategy(broker_ip_port, publish_topics)

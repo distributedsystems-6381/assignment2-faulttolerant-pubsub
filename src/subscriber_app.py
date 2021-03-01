@@ -94,12 +94,17 @@ def start_receiving_messages(subscribing_strategy, topics_publishers):
 #Watch function for the broker node change
 def watch_broker_func():
     print("Broker node changed")
-    get_publishers(broker_ip_port)
+    if strategy == "direct":
+        get_publishers(broker_ip_port)
+    elif strategy == "broker":
+        broker_strategy_reconnect_and_receive()
 
 kzclient = kzcl.ZkClientService()
 broker_ip_port = ""
 #get the current active broker ip:port from the zookeeper
 def get_publishers(broker_ip_port):
+    #The broker node value for direct strategy e.g. node_path = /leaderelection/broker_0000000001, node_value = broker_ip:listening_port
+    # e.g node_value = 10.0.0.5:2000
     active_broker_ip_port = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
     if active_broker_ip_port == broker_ip_port:
         print("There is no change in active broker")
@@ -132,7 +137,25 @@ def get_publishers(broker_ip_port):
     else:
         print("There are no publisers for these topics:{}".format(subscribed_topics))
 
-get_publishers(broker_ip_port)
+def broker_strategy_reconnect_and_receive():
+    brokers = []
+    #Get active broker_ip_port
+    active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)  
+    #For broker strategy, the broker node_value is in this format, node_value  = broker_ip:publishing_port,listening_port 
+    # e.g 10.0.0.5:2000,3000 
+    broker_ip = active_broker_node_value.split(':')[0]
+    broker_publishing_port = active_broker_node_value.split(':')[1].split(',')[0]
+    active_broker_ip_port = broker_ip + ":" + broker_publishing_port
+    print("Broker leader is publishing message at ip_port:{}".format(active_broker_ip_port))
+    brokers.append(broker_ip_port)
+    kzclient.watch_node(const.LEADER_ELECTION_ROOT_ZNODE, watch_broker_func)
+    start_receiving_messages(strategy, brokers)
+   
+#Start the message pump based upon messaging strategy
+if strategy == "direct":
+    get_publishers(broker_ip_port)
+elif strategy == "broker":
+    broker_strategy_reconnect_and_receive()
 
 
 

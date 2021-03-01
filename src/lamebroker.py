@@ -79,6 +79,8 @@ def leader_election_callback(leader_broker_ip_port):
     refresh_publishers()
 
 #Try to elect a broker leader
+#The broker node value for direct strategy e.g. node_path = /leaderelection/broker_0000000001, node_value = broker_ip:listening_port
+# e.g node_value = 10.0.0.5:2000
 leader_elector = le.LeaderEelector(zk_client_svc, const.LEADER_ELECTION_ROOT_ZNODE, const.BROKER_NODE_PREFIX)
 leader_elector.try_elect_leader(leader_election_callback, port)
 
