@@ -15,6 +15,7 @@ sudo -H python3 -m pip install --upgrade pyzmq
 ```
 
 **High Level Design
+
 ![alternativetext](/fault-tolerant-pub-sub-using-zookeeper.PNG)
 
 ***To run the publisher and subscriber - direct implementation:***
