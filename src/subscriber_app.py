@@ -3,23 +3,23 @@ import csv
 from datetime import datetime
 import threading
 
-import src.host_ip_provider as hip
-import src.direct_sub_middleware as dmw
-import src.broker_sub_middleware as bmw
+import host_ip_provider as hip
+import direct_sub_middleware as dmw
+import broker_sub_middleware as bmw
 import zmq
 import zk_clientservice as kzcl
 import constants as const
 
 '''
- args python3 {direct or broker} {zookeeper_ip:port} 
+ args python3 {direct or broker} {zookeeper_ip:port} topic1 topic2
  1. Get current active broker_ip:port from zookeeper
- 2. Watch for the active broker node in zookeeper
- 3. Retrieve publishers for the topics of the ineterest
- 4. Connect to the publishers to get the topic for the direct message
+ 2. Retrieve publishers for the topics of the ineterest
+ 3. Watch for the active broker node in zookeeper
 '''
 #e.g args "python3 subscriber_app.py direct 127.0.0.1:2181 topic1 topic2"
 # capture subscriber IP for use in logger_function
 subscriber_ip = hip.get_host_ip()
+publishers = []
 
 #Extract the strategy to discover and disseminate the messages
 strategy = ""
@@ -50,44 +50,6 @@ if len(subscribed_topics) == 0:
     print("Please provide topics to subscribe)")
     sys.exit()
 
-
-def watch_broker_func():
-    print("Broker node changed")
-    get_publishers()
-
-kzclient = kzcl.ZkClientService()
-publishers = []
-broker_ip_port = ""
-#get the current active broker ip:port from the zookeeper
-def get_publishers():
-    active_broker_ip_port = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
-    if active_broker_ip_port == broker_ip_port:
-        print("There is no change in active broker)
-        return
-
-    broker_ip_port = active_broker_ip_port
-    if broker_ip_port == "":
-        print("No active broker is in the system, exiting the system")
-        sys.exit()
-
-    #Retrieve message publishers from the active broker
-    print("Retrieving topic publishers from active broker running at ip:port => {}".format(zookeeper_ip_port))  
-    context = zmq.Context()
-    broker_socket = context.socket(zmq.REQ)
-    broker_socket.connect("tcp://{}".format(broker_ip_port))
-    for topic in subscribed_topics:
-        broker_socket.send_string(topic)
-        message = broker_socket.recv_string()
-        print("Message received from broker: {}".format(message))
-        topic_publishers = message.split(',')
-        for topic_publisher in topic_publishers:
-            publishers.append(topic_publisher)
-    kzclient.watch_node(const.LEADER_ELECTION_ROOT_ZNODE, watch_broker_func)
-
-get_publishers()
-
-print(publishers)
-
 def logger_function(message):
     topic_data, message_id, message_sent_at_timestamp, publisher_ip = message.split("#")
     datetime_sent_at = datetime.strptime(message_sent_at_timestamp, '%Y-%m-%dT%H::%M::%S.%f')
@@ -108,8 +70,7 @@ def notify(topic, message):
     print("Data received by this app, topic: {}, message: {}".format(topic, message))
     logger_thread = threading.Thread(target=logger_function, args=(message,), daemon=True)
     logger_thread.start()
-
-
+    
 # direct implementation
 def direct_messaging_strategy(pubs, topics):
     # create the SubscriberMiddleware and register the topics of interest and the notify callback function
@@ -123,9 +84,55 @@ def broker_messaging_strategy(brokers, topics):
     broker.register(topics, notify)
 
 # initiate messaging based on which strategy is submitted
-if strategy == "direct" and publishers is not None:
-    direct_messaging_strategy(publishers, subscribed_topics)
-elif strategy == "broker" and publishers is not None:    
-    broker_messaging_strategy(publishers, subscribed_topics)
-else:
-    print("Check that all necessary values have been submitted")
+def start_receiving_messages(subscribing_strategy, topics_publishers):
+    if subscribing_strategy == "direct" and topics_publishers is not None:
+        direct_messaging_strategy(topics_publishers, subscribed_topics)
+    elif subscribing_strategy == "broker" and topics_publishers is not None:    
+        broker_messaging_strategy(topics_publishers, subscribed_topics)
+    else:
+        print("Check that all necessary values have been submitted")
+#Watch function for the broker node change
+def watch_broker_func():
+    print("Broker node changed")
+    get_publishers(broker_ip_port)
+
+kzclient = kzcl.ZkClientService()
+broker_ip_port = ""
+#get the current active broker ip:port from the zookeeper
+def get_publishers(broker_ip_port):
+    active_broker_ip_port = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
+    if active_broker_ip_port == broker_ip_port:
+        print("There is no change in active broker")
+        return
+
+    broker_ip_port = active_broker_ip_port
+    if broker_ip_port == "":
+        print("No active broker is in the system, exiting the system")
+        sys.exit()
+
+    #Retrieve message publishers from the active broker
+    print("Retrieving topic publishers from active broker running at ip:port => {}".format(zookeeper_ip_port))  
+    context = zmq.Context()
+    broker_socket = context.socket(zmq.REQ)
+    broker_socket.connect("tcp://{}".format(broker_ip_port))
+    for topic in subscribed_topics:
+        broker_socket.send_string(topic)
+        message = broker_socket.recv_string()        
+        print("Message received from broker: {}".format(message))
+        if message == '':
+            print("There are no publishers for the topic: {}".format(topic))
+            continue
+        topic_publishers = message.split(',')
+        for topic_publisher in topic_publishers:
+            publishers.append(topic_publisher)
+    kzclient.watch_node(const.LEADER_ELECTION_ROOT_ZNODE, watch_broker_func)
+    if len(publishers) != 0:
+        print("Publishers for the topics:{}".format(publishers))
+        start_receiving_messages(strategy, publishers)
+    else:
+        print("There are no publisers for these topics:{}".format(subscribed_topics))
+
+get_publishers(broker_ip_port)
+
+
+

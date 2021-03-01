@@ -6,7 +6,6 @@ import kazoo.exceptions as ke
 import host_ip_provider as hip
 import constants as const
 
-
 print(sys.argv)
 try:
     zk = cl.KazooClient()

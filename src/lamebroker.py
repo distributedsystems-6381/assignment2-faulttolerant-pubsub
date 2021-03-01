@@ -13,15 +13,14 @@ The functions of the broker:
  2. Try to elect leader with LeaderEelector, and keep watch on the other stand-by broker nodes 
     by registering a callback function with LeaderEelector object, which is called when a broker leader node changes.
     And as part of this callback refreshes the topic publisgers list as well
- 3. Also, every 5 seconds keep refreshing the connected publishers
+ 3. Also, every watch for the publishers nodes change under /pubs
  4. Bind to a tcp socket on all network interfaces on the given port, by default it binds to port 7000
     for the subscribers to connect to retrive publisher's topics and ip:port
 '''
-#publisher refresh_interval in seconds
-REFRESH_PUBS_IN_SECONDS = 5
 #args - python3 lamebroker.py 9000
 topic_publishers = {}
 
+#lock object for syncronizing access to topic_publishers dictionary
 lock = threading.Lock()
 
 port = "7000"
@@ -31,6 +30,7 @@ if len(sys.argv) > 1:
 print('Lame broker started on port:{}'.format(port))
 
 #message parameter format= pub_ip:port#topic1, topic2, topic3 etc.
+#The parameter for the call from the subscriber to get topic publishers will be just the name of the topic e.g. "topic1"
 def message_processor(message):
     msg_parts = message.split('#')
     #Register publishers ip:port and topics (this data comes from publishers)
@@ -56,18 +56,25 @@ def message_processor(message):
     return "" 
 
 zk_client_svc = kzcl.ZkClientService()
+
+def publishers_change_watch_func(event):   
+    refresh_publishers()
+
 def refresh_publishers():
+    print("Trying to refresh the publishers")
     publishers_nodes = zk_client_svc.get_children(const.PUBLISHERS_ROOT_PATH)
+    topic_publishers.clear()
     if publishers_nodes != None and len(publishers_nodes) > 0:        
         for pub_node in publishers_nodes:
             pub_node_data = zk_client_svc.get_node_value(const.PUBLISHERS_ROOT_PATH + '/' + pub_node)
             message_processor(pub_node_data)            
-    print("list of topic publishers: {}".format(topic_publishers))    
+        print("List of topic publishers are: {}".format(topic_publishers))
+    else:
+         print("There're no topic publishers available!")
+    zk_client_svc.watch_node(const.PUBLISHERS_ROOT_PATH, publishers_change_watch_func)
 
-threading.Timer(REFRESH_PUBS_IN_SECONDS, refresh_publishers).start()
-
-def leader_election_callback():
-    print("Performing leader election work")
+def leader_election_callback(leader_broker_ip_port):
+    print("The current leader is: {}".format(leader_broker_ip_port))
     #hydrate publishers and topic
     refresh_publishers()
 

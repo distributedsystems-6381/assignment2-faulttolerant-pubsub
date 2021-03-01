@@ -1,5 +1,6 @@
 import host_ip_provider as hip
 import constants as const
+import os
 
 '''
     Leader election algorithm:
@@ -32,9 +33,9 @@ class LeaderEelector():
         self.create_ephemeral_node_if_not_exists()
         self.leader_election_callback = leader_election_callback
         child_nodes = self.kzclient.get_children(self.leader_election_znode_root_path)
-        if child_nodes is None or len(child_nodes) < 2:
-           print("Nodes count should be  >= 2 to elect a leader")
-           return
+        if child_nodes is None or len(child_nodes) < 1:
+           print("Nodes count should be  >= 1, at least there should be one active broker, exiting the application!")           
+           os._exit(0)
        
         child_nodes.sort()
         print("Sorted nodes for the leader election: {}".format(child_nodes))
@@ -42,6 +43,7 @@ class LeaderEelector():
         #Then this broker is the leader, so don't follow any other nodes
         if self.ephemeral_node_path.endswith(child_nodes[0]):
             print("This node is the leader: {}".format(self.ephemeral_node_path))
+            self.kzclient.watch_node(self.ephemeral_node_path, self.watch_for_delete)
         else:
             this_broker_node_name = "broker_" + self.ephemeral_node_path[len(self.ephemeral_node_path)-10:]
             this_broker_node_index = child_nodes.index(this_broker_node_name)
@@ -53,7 +55,7 @@ class LeaderEelector():
             self.kzclient.watch_node(node_being_followed, self.watch_for_delete)
         
         if self.leader_election_callback != None:
-                self.leader_election_callback(self.kzclient.get_node_value(self.leader_election_znode_root_path + child_nodes[0]))
+                self.leader_election_callback(self.kzclient.get_node_value(self.leader_election_znode_root_path + "/"+ child_nodes[0]))
 
     def watch_for_delete(self, event):
         print("There's a change event in the leader node event_type:{}".format(event.type))

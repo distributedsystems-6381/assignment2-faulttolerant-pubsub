@@ -2,9 +2,9 @@ import sys
 import time
 import zmq
 from random import randrange
-import src.direct_pub_middleware as dmw
-import src.broker_pub_middleware as bmw
-import src.host_ip_provider as hip
+import direct_pub_middleware as dmw
+import broker_pub_middleware as bmw
+import host_ip_provider as hip
 import zk_clientservice as kzcl
 import constants as const
 
@@ -44,7 +44,7 @@ def publish(strategy, topics):
         for topic in topics:
             topic_data = topic_data_provider(topic)
             strategy.publish(topic, topic_data)
-        time.sleep(5)
+        time.sleep(10)
 
 
 # direct implementation
@@ -97,10 +97,10 @@ if strategy == "direct":
         if counter < len(publish_topics):
             register_publisher_data_to_zookeeper = register_publisher_data_to_zookeeper + topic + ','
         else:
-            register_publisher_data_to_zookeeper = register_publisher_data_to_zookeeper + ',' + topic
-
+            register_publisher_data_to_zookeeper = register_publisher_data_to_zookeeper + topic
+        counter = counter + 1
     print("Registering publisher to the broker: {}".format(register_publisher_data_to_zookeeper))
-    kzclient.create_node(const.PUBLISHERS_ROOT_PATH + const.PUBLISHERS_NODE_PREFIX, register_publisher_data_to_zookeeper, False, True)
+    kzclient.create_node(const.PUBLISHERS_ROOT_PATH + const.PUBLISHERS_NODE_PREFIX, register_publisher_data_to_zookeeper, True, True)
 else:
     #Add additional topics if provided for the broker strategy
     if len(sys.argv) > 3:

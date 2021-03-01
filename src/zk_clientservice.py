@@ -30,7 +30,8 @@ class ZkClientService():
     
     def watch_node(self, node_path, watch_func):
         try:
-            self.kzclient.get_children(node_path, watch=watch_func)
+            if self.kzclient.exists(node_path): 
+                self.kzclient.get_children(node_path, watch=watch_func)
 
         except ke.KazooException as e:
             logger.error('Kazoo exception: '+ str(e))
@@ -38,11 +39,11 @@ class ZkClientService():
         except Exception as e:
             logger.error('Exception occured: '+ str(e))
     
-    def get_children(self, node_path):
-        print("Getting child nodes for the node_path: {}".format(node_path))
+    def get_children(self, node_path):       
         childNodes = None
         try:
-            childNodes = self.kzclient.get_children(node_path)              
+            if self.kzclient.exists(node_path): 
+                childNodes = self.kzclient.get_children(node_path)              
         except ke.KazooException as e:
             logger.error('Kazoo exception: '+ str(e))
         except Exception as e:
@@ -53,6 +54,8 @@ class ZkClientService():
     def get_node_value(self, node_path):
         if self.kzclient.exists(node_path):       
             data, _ = self.kzclient.get(node_path)
+            if data is None:
+                return ""
             return data.decode("utf-8")
 
     def set_node_value(self, node_path, node_value):
@@ -64,9 +67,9 @@ class ZkClientService():
     def get_broker(self, broker_root_node_path):
         if self.kzclient.exists(broker_root_node_path): 
             child_nodes = self.kzclient.get_children(broker_root_node_path)
-            child_nodes = child_nodes.sort()
+            child_nodes.sort()
             active_broker_node = child_nodes[0]
-            return self.get_node_value(active_broker_node)
+            return self.get_node_value(broker_root_node_path + '/' + active_broker_node)
         else:
             return "" 
 
