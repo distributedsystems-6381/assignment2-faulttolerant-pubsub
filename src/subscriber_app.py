@@ -92,7 +92,7 @@ def start_receiving_messages(subscribing_strategy, topics_publishers):
     else:
         print("Check that all necessary values have been submitted")
 #Watch function for the broker node change
-def watch_broker_func():
+def watch_broker_func(event):
     print("Broker node changed")
     if strategy == "direct":
         get_publishers(broker_ip_port)
@@ -141,13 +141,13 @@ def broker_strategy_reconnect_and_receive():
     brokers = []
     #Get active broker_ip_port
     active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)  
-    #For broker strategy, the broker node_value is in this format, node_value  = broker_ip:publishing_port,listening_port 
+    #For broker strategy, the broker node_value is in this format, node_value  = broker_ip:listening_port,publishing_port
     # e.g 10.0.0.5:2000,3000 
     broker_ip = active_broker_node_value.split(':')[0]
-    broker_publishing_port = active_broker_node_value.split(':')[1].split(',')[0]
+    broker_publishing_port = active_broker_node_value.split(':')[1].split(',')[1]
     active_broker_ip_port = broker_ip + ":" + broker_publishing_port
     print("Broker leader is publishing message at ip_port:{}".format(active_broker_ip_port))
-    brokers.append(broker_ip_port)
+    brokers.append(active_broker_ip_port)
     kzclient.watch_node(const.LEADER_ELECTION_ROOT_ZNODE, watch_broker_func)
     start_receiving_messages(strategy, brokers)
    

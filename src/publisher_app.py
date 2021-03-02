@@ -7,7 +7,10 @@ import broker_pub_middleware as bmw
 import host_ip_provider as hip
 import zk_clientservice as kzcl
 import constants as const
+import os
+import multiprocessing as mp
 
+process_list = []
 # direct args => python3 publisher_app.py direct {lamebroker_ip:port} {publishing_port} topic1 topic2
 #       e.g. "python3 publisher_app.py direct "10.0.0.6:7000" 5000 topic1 topic2"
 # broker args => "python3 publisher_app.py broker {message_broker_ip:port} {publishing_port} topic1 topic2
@@ -35,8 +38,10 @@ def topic_data_provider(topic):
 
 # publish using specified strategy
 def publish(strategy, topics):
+    global keep_publishing
+    keep_publishing = True
     # keep publishing different topics every 5 seconds
-    while True:
+    while keep_publishing:
         if not topics:
             print("No topic to publish")
             break
@@ -44,7 +49,7 @@ def publish(strategy, topics):
         for topic in topics:
             topic_data = topic_data_provider(topic)
             strategy.publish(topic, topic_data)
-        time.sleep(10)
+        time.sleep(60)
 
 
 # direct implementation
@@ -56,6 +61,7 @@ def direct_messaging_strategy(port, topics):
 # broker implementation
 def broker_messaging_strategy(ips_ports, topics):
     broker = bmw.BrokerPubMiddleware(ips_ports)
+    #broker.publish_topics(topics)
     publish(broker, topics)
 
 
@@ -110,13 +116,39 @@ else:
 
 print("Topics to publish: {}".format(publish_topics))
 
+#Watch function for the broker node change
+def watch_broker_func(event):
+    print("Broker node changed")
+    if len(process_list) > 0:
+        thr = process_list[0]
+        thr.terminate()
+
+    broker_strategy_reconnect_and_publish()
+
+def broker_strategy_reconnect_and_publish():
+     #Get the broker_ip_port for the broker strategy
+    active_broker_node_name = kzclient.get_broker_node_name(const.LEADER_ELECTION_ROOT_ZNODE)
+    if active_broker_node_name == "":
+        print("No broker is running, existing the publisher app!")
+        os._exit(0)    
+    active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
+    print("Setting watch on leader broker node_path:{}".format(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name))
+    kzclient.watch_individual_node(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name, watch_broker_func)   
+    broker_ip = active_broker_node_value.split(':')[0]
+    broker_listening_port = active_broker_node_value.split(':')[1].split(',')[0]
+    active_broker_ip_port = broker_ip + ":" + broker_listening_port
+    print("Broker leader is:{}".format(active_broker_ip_port))
+    thr = mp.Process(target=broker_messaging_strategy, args = (active_broker_ip_port, publish_topics))
+    process_list.append(thr)
+    #thr.daemon = True
+    thr.start()
+    #broker_messaging_strategy(active_broker_ip_port, publish_topics)
+    
 # initiate messaging based on which strategy is submitted
 if strategy == "direct":   
     direct_messaging_strategy(publisher_port, publish_topics)
 elif strategy == "broker":
-    #Get the broker_ip_port for the broker strategy
-    active_broker_node_value = kzcl.ZkClientService().get_broker(const.LEADER_ELECTION_ROOT_ZNODE)    
-    broker_ip = active_broker_node_value.split(':')[0]
-    broker_listening_port = active_broker_node_value.split(':')[1].split(',')[1]
-    broker_ip_port = broker_ip + ":" + broker_listening_port
-    broker_messaging_strategy(broker_ip_port, publish_topics)
+    broker_strategy_reconnect_and_publish()
+
+while True:
+    time.sleep(5)

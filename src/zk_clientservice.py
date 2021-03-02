@@ -2,12 +2,14 @@ import sys
 import logging as logger
 
 import kazoo.client as kzcl
+import kazoo.retry as kzretry
 import kazoo.exceptions as ke
 import constants as const
 
 class ZkClientService():    
-    def __init__(self):        
-        self.kzclient = kzcl.KazooClient(const.ZOO_KEEPER_SERVER_IP_PORT)
+    def __init__(self):
+        _retry = kzretry.KazooRetry(max_tries=1000, delay=0.5, backoff=2)       
+        self.kzclient = kzcl.KazooClient(const.ZOO_KEEPER_SERVER_IP_PORT, connection_retry=_retry)
         self.kzclient.start()
     
     def create_node(self, node_path_to_create, node_value, is_ephemeral, is_sequential):
@@ -32,6 +34,17 @@ class ZkClientService():
         try:
             if self.kzclient.exists(node_path): 
                 self.kzclient.get_children(node_path, watch=watch_func)
+
+        except ke.KazooException as e:
+            logger.error('Kazoo exception: '+ str(e))
+
+        except Exception as e:
+            logger.error('Exception occured: '+ str(e))
+    
+    def watch_individual_node(self, node_path, watch_func):
+        try:
+            if self.kzclient.exists(node_path): 
+                self.kzclient.get(node_path, watch=watch_func)
 
         except ke.KazooException as e:
             logger.error('Kazoo exception: '+ str(e))
@@ -72,6 +85,18 @@ class ZkClientService():
             return self.get_node_value(broker_root_node_path + '/' + active_broker_node)
         else:
             return "" 
+    
+    def get_broker_node_name(self, broker_root_node_path):
+        if self.kzclient.exists(broker_root_node_path): 
+            child_nodes = self.kzclient.get_children(broker_root_node_path)
+            child_nodes.sort()
+            if len(child_nodes) > 0:
+                active_broker_node = child_nodes[0]
+                return active_broker_node
+            else:
+                return ""
+        else:
+            return ""
 
     def stop_kzclient(self):
         self.kzclient.stop()

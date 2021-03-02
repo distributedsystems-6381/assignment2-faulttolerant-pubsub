@@ -2,6 +2,7 @@ import zmq
 import uuid
 from datetime import datetime
 import host_ip_provider as hip
+import random
 
 
 class DirectPubMiddleware():

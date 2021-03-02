@@ -41,9 +41,11 @@ class LeaderEelector():
         print("Sorted nodes for the leader election: {}".format(child_nodes))
         #if the created ephemeral node path is the node with smallest sequence number
         #Then this broker is the leader, so don't follow any other nodes
+        node_to_watch = ""
         if self.ephemeral_node_path.endswith(child_nodes[0]):
             print("This node is the leader: {}".format(self.ephemeral_node_path))
-            self.kzclient.watch_node(self.ephemeral_node_path, self.watch_for_delete)
+            node_to_watch = self.ephemeral_node_path
+            
         else:
             this_broker_node_name = "broker_" + self.ephemeral_node_path[len(self.ephemeral_node_path)-10:]
             this_broker_node_index = child_nodes.index(this_broker_node_name)
@@ -52,8 +54,9 @@ class LeaderEelector():
             #and broker "broker_0000000001" will not watch anyone, as it's the leader
             node_to_watch_index = this_broker_node_index - 1
             node_being_followed = self.leader_election_znode_root_path +'/'+ child_nodes[node_to_watch_index]
-            self.kzclient.watch_node(node_being_followed, self.watch_for_delete)
-        
+            node_to_watch = node_being_followed            
+        self.kzclient.watch_individual_node(node_to_watch, self.watch_for_delete)
+
         if self.leader_election_callback != None:
                 self.leader_election_callback(self.kzclient.get_node_value(self.leader_election_znode_root_path + "/"+ child_nodes[0]))
 

@@ -1,12 +1,41 @@
 import sys
+import os
 import logging as logger
 
 import kazoo.client as cl
 import kazoo.exceptions as ke
 import host_ip_provider as hip
 import constants as const
+import zk_clientservice as zkcl
+import time
 
 print(sys.argv)
+
+kzclient = zkcl.ZkClientService()
+
+def watch_broker_func(event):
+    print("Broker node changed")
+    broker_strategy_reconnect_and_publish()
+
+def broker_strategy_reconnect_and_publish():
+    active_broker_node_name = kzclient.get_broker_node_name(const.LEADER_ELECTION_ROOT_ZNODE)
+    if active_broker_node_name == "":
+        print("No broker is running, existing the publisher app!")
+        os._exit(0)
+    active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
+    print("Setting watch on leader broker node_path:{}".format(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name))
+    kzclient.watch_individual_node(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name, watch_broker_func)   
+    broker_ip = active_broker_node_value.split(':')[0]
+    broker_listening_port = active_broker_node_value.split(':')[1].split(',')[0]
+    active_broker_ip_port = broker_ip + ":" + broker_listening_port
+    print("Broker leader is:{}".format(active_broker_ip_port))
+
+broker_strategy_reconnect_and_publish()
+
+while True:
+    time.sleep(5)
+
+'''
 try:
     zk = cl.KazooClient()
     zk.start()
@@ -57,9 +86,8 @@ try:
 
     @zk.ChildrenWatch("/my/favorite")
     def watch_children(children):
-         print("Children are now: %s" % children)   
+         print("Children are now: %s" % children)  
 
-    '''
     children = zk.get_children('/')
 
     @zk.DataWatch("/my/favorite")
@@ -73,9 +101,7 @@ try:
 
     if zk.exists("/my/favorite") is None:
         result = zk.create("/my/favorite/node5", b"node_value_5", makepath = True)
-    '''
-        
-    '''   
+   
     if zk.exists("/my/znode/node2") is None:
         result = zk.create("/my/znode/node2", b"node2_value", makepath = True, ephemeral=True, sequence=True)
         print(result)
@@ -99,10 +125,11 @@ try:
         print("There are %s children with names %s" % (len(children), children))
 
     print(children)
-    '''
+  
 except ke.KazooException as e:
     logger.error('Kazoo exception: '+ str(e))
     print(e)
 finally:
     zk.stop()
     print("zookeeper client stopped")
+    '''
