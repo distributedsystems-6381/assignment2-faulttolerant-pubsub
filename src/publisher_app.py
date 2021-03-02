@@ -130,7 +130,8 @@ def broker_strategy_reconnect_and_publish():
     active_broker_node_name = kzclient.get_broker_node_name(const.LEADER_ELECTION_ROOT_ZNODE)
     if active_broker_node_name == "":
         print("No broker is running, existing the publisher app!")
-        os._exit(0)    
+        os._exit(0)
+        return    
     active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
     print("Setting watch on leader broker node_path:{}".format(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name))
     kzclient.watch_individual_node(const.LEADER_ELECTION_ROOT_ZNODE + '/' + active_broker_node_name, watch_broker_func)   
@@ -152,3 +153,4 @@ elif strategy == "broker":
 
 while True:
     time.sleep(10)
+

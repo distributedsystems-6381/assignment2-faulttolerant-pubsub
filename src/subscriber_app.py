@@ -157,6 +157,7 @@ def broker_strategy_reconnect_and_receive():
     if active_broker_node_name == "":
         print("No broker is running, existing the subscriber app!")
         os._exit(0)
+        return
     active_broker_node_value = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)    
     #For broker strategy, the broker node_value is in this format, node_value  = broker_ip:listening_port,publishing_port
     # e.g 10.0.0.5:2000,3000 
