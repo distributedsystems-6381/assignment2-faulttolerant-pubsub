@@ -151,4 +151,4 @@ elif strategy == "broker":
     broker_strategy_reconnect_and_publish()
 
 while True:
-    time.sleep(5)
+    time.sleep(10)

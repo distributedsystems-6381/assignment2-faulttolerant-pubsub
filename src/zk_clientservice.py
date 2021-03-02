@@ -6,7 +6,7 @@ import kazoo.retry as kzretry
 import kazoo.exceptions as ke
 import constants as const
 
-class ZkClientService():    
+class ZkClientService():
     def __init__(self):
         _retry = kzretry.KazooRetry(max_tries=1000, delay=0.5, backoff=2)       
         self.kzclient = kzcl.KazooClient(const.ZOO_KEEPER_SERVER_IP_PORT, connection_retry=_retry)
