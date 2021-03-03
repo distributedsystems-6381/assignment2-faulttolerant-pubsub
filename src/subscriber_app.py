@@ -103,6 +103,7 @@ def watch_broker_func(event):
     if len(process_list) > 0:
         thr = process_list[0]
         thr.terminate()
+        process_list.pop(0)
 
     if strategy == "direct":
         get_publishers(broker_ip_port)

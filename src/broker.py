@@ -40,7 +40,7 @@ def elect_leader():
     #Try to elect a broker leader
     zk_client_svc = kzcl.ZkClientService()
     leader_elector = le.LeaderEelector(zk_client_svc, const.LEADER_ELECTION_ROOT_ZNODE, const.BROKER_NODE_PREFIX)
-    #The broker node value for broker strategy e.g. node_path = /leaderelection/broker_0000000001, node_value = broker_ip:publishing_port,listening_port
+    #The broker node value for broker strategy e.g. node_path = /leaderelection/broker_0000000001, node_value = broker_ip:listening_port,publishing_port
     # e.g node_value = 10.0.0.5:2000,3000
     leader_elector.try_elect_leader(leader_election_callback, listen + "," + publish)
 
