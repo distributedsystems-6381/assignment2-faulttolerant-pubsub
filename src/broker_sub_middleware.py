@@ -22,7 +22,7 @@ class BrokerSubMiddleware():
         for topic in self.registered_topics:
             for broker in self.brokers:
                 server_address = "tcp://{}".format(broker)
-                print("Connecting weather server at address: {}".format(server_address))
+                print("Connecting publisher server at address: {}".format(server_address))
                 socket = context.socket(zmq.SUB)
                 socket.connect(server_address)
                 socket.setsockopt_string(zmq.SUBSCRIBE, topic)

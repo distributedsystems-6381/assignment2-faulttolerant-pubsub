@@ -120,6 +120,7 @@ def get_publishers(broker_ip_port):
     if active_broker_node_name == "":
         print("No broker is running, existing the subscriber app!")
         os._exit(0)
+        return
 
     active_broker_ip_port = kzclient.get_broker(const.LEADER_ELECTION_ROOT_ZNODE)
     if active_broker_ip_port == broker_ip_port:
@@ -130,7 +131,7 @@ def get_publishers(broker_ip_port):
     print("Retrieving topic publishers from active broker running at ip:port => {}".format(zookeeper_ip_port))  
     context = zmq.Context()
     broker_socket = context.socket(zmq.REQ)
-    broker_socket.connect("tcp://{}".format(broker_ip_port))
+    broker_socket.connect("tcp://{}".format(active_broker_ip_port))
     for topic in subscribed_topics:
         broker_socket.send_string(topic)
         message = broker_socket.recv_string()        

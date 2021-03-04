@@ -14,8 +14,8 @@
             //"args": ["9000"]  //arguments for the lamebroker
             //"args": ["4000", "5000"]  //arguments for the broker:listening_port publishing_port
             //"args": ["direct", "127.0.0.1:2181", "8000", "topic1", "topic2"] //argumets for direct strategy publishers
-            "args": ["broker", "127.0.0.1:2181", "topic1", "topic2"] //argumets for broker strategy publishers
-            //"args": ["direct", "127.0.0.1:2181", "topic5", "temp", "humidity"] //argumets for direct strategy subscribers
+            //"args": ["broker", "127.0.0.1:2181", "topic1", "topic2"] //argumets for broker strategy publishers
+            "args": ["direct", "127.0.0.1:2181", "topic5", "temp", "humidity"] //argumets for direct strategy subscribers
             //"args": ["broker", "127.0.0.1:2181", "topic1", "topic2"] //argumets for broker strategy subscribers
         }
     ]

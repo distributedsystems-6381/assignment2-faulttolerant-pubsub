@@ -92,7 +92,7 @@ socket.bind("tcp://*:%s" % port)
 while True:
     #Wait for next request from client
     message = socket.recv_string()
-    print("Received request: {}", message)
+    print("Received request: {}".format(message))
     response = message_processor(message)
-    print("Sending response: {}", message)   
+    print("Sending response: {}".format(response))
     socket.send_string(response)
