@@ -50,7 +50,7 @@ class PubSub_Topo(Topo):
         switch_index = (switch_index + 1) % Racks
         for h in range(P):
             host_index += 1
-            host = self.addHost('h{}s{}'.format(host_index + 1, switch_index + 1))
+            host = self.addHost('h{}s{}'.format(host_index, switch_index + 1))
             print("Added next publisher host", host)
             self.addLink(host, self.ps_switches[switch_index], delay='1ms')
             print("Added link between ", host, " and switch ", self.ps_switches[switch_index])
@@ -60,7 +60,7 @@ class PubSub_Topo(Topo):
         switch_index = (switch_index + 1) % Racks
         for h in range(S):
             host_index += 1
-            host = self.addHost('h{}s{}'.format(host_index + 1, switch_index + 1))
+            host = self.addHost('h{}s{}'.format(host_index, switch_index + 1))
             print("Added next subscriber host", host)
             self.addLink(host, self.ps_switches[switch_index], delay='1ms')
             print("Added link between ", host, " and switch ", self.ps_switches[switch_index])

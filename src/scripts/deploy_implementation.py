@@ -163,7 +163,7 @@ def main():
     # print("Generating commands file to be sourced")
     a = genCommandsFile(parsed_args)
 
-    for i in reversed(range(len(net.hosts))):
+    for i in range(len(net.hosts)):
         net.hosts[i].cmdPrint(a[i])
 
     # run the cli
