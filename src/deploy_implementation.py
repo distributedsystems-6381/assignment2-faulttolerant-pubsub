@@ -3,6 +3,7 @@
 import os  # OS level utilities
 import sys
 import argparse  # for command line parsing
+import shutil
 
 from signal import SIGINT
 from time import time
@@ -78,7 +79,8 @@ def genCommandsFile(args):
         cmdz = []
 
         # create zookeeper command
-        zk_cmd = "sudo ./bin/zkServer.sh start-foreground"
+        zk_path = "/home/tito/workspace/zookeeper"
+        zk_cmd = "sudo " + zk_path + "/bin/zkServer.sh start"
         cmdz.append(zk_cmd)
         cmds.write(zk_cmd)
 
@@ -155,7 +157,7 @@ def main():
     # clean up data from previous zookeeper deploys
     dir_path = '/tmp/zookeeper/version-2'
     try:
-        os.rmdir(dir_path)
+        shutil.rmtree(dir_path)
         print("Directory '%s' has been removed successfully" % dir_path)
     except OSError as e:
         print("Error: %s : %s" % (dir_path, e.strerror))
@@ -164,7 +166,7 @@ def main():
     a = genCommandsFile(parsed_args)
 
     for i in range(len(net.hosts)):
-        net.hosts[i].cmdPrint(a[i])
+        net.hosts[i].sendCmd(a[i])
 
     # run the cli
     CLI(net)
@@ -179,7 +181,7 @@ def main():
     # show up in the *.out files.
 
     # cleanup
-    net.stop()
+    # net.stop()
 
 
 if __name__ == '__main__':
