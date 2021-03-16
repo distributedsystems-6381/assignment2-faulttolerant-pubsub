@@ -17,7 +17,7 @@ from pathlib import Path
 '''
  args python3 {direct or broker} {zookeeper_ip:port} topic1 topic2
  1. Get current active broker_ip:port from zookeeper
- 2. Retrieve publishers for the topics of the ineterest
+k 2. Retrieve publishers for the topics of the interest
  3. Watch for the active broker node in zookeeper
 '''
 # e.g args "python3 subscriber_app.py direct 127.0.0.1:2181 topic1 topic2"

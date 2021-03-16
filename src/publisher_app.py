@@ -49,7 +49,7 @@ def publish(strategy, topics):
         for topic in topics:
             topic_data = topic_data_provider(topic)
             strategy.publish(topic, topic_data)
-        time.sleep(20)
+        time.sleep(1)
 
 
 # direct implementation
@@ -157,4 +157,4 @@ elif strategy == "broker":
     broker_strategy_reconnect_and_publish()
 
 while True:
-    time.sleep(10)
+    time.sleep(1)

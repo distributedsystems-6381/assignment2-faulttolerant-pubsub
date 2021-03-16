@@ -5,11 +5,6 @@ import sys
 import argparse  # for command line parsing
 import shutil
 
-from signal import SIGINT
-from time import time
-
-import subprocess
-
 # These are all Mininet-specific
 from mininet.topo import Topo
 from mininet.net import Mininet
@@ -32,11 +27,6 @@ from mininet.node import OVSController
 def parseCmdLineArgs():
     # parse the command line
     parser = argparse.ArgumentParser()
-
-    # @NOTE@: You might need to make appropriate changes
-    #                          to this logic. Just make sure.
-
-    # add optional arguments
     parser.add_argument("-i", "--ip", type=str, default="127.0.0.1", help="Zookeeper IP, default 127.0.0.1")
     parser.add_argument("-p", "--port", type=int, default=2181, help="Zookeeper port, default is 2181")
     parser.add_argument("-r", "--racks", type=int, choices=[1, 2, 3, 4], default=1,
@@ -50,12 +40,8 @@ def parseCmdLineArgs():
     parser.add_argument("-ST", "--subscribertopics", required=True, type=str, nargs='*', default="",
                         help="topics to subscribe to")
 
-    # add positional arguments in that order
-    # parser.add_argument("datafile", help="Big data file")
-
     # parse the args
     args = parser.parse_args()
-
     return args
 
 
@@ -65,60 +51,68 @@ def convertToStr(input_seq):
     return final_str
 
 
-##################################
-#  Generate the commands file to be sources
-#
-# @NOTE@: You will need to make appropriate changes
-#                          to this logic.
-##################################
-def genCommandsFile(args):
+def runCommands(net, args):
     try:
-        # create the commands file. It will overwrite any previous file with the
-        # same name.
-        cmds = open("commands.txt", "w")
-        cmdz = []
+        src_dir_path = "/home/tito/workspace/assignment2"
 
         # create zookeeper command
-        zk_path = "/home/tito/workspace/zookeeper"
-        zk_cmd = "sudo " + zk_path + "/bin/zkServer.sh start"
-        cmdz.append(zk_cmd)
-        cmds.write(zk_cmd)
+        host = 0
+        zk_path = "/home/tito/workspace/zookeeper"  # change directory for zookeeper
+        zk_cmd = "sudo " + zk_path + "/bin/zkServer.sh start &"
+        print("host #" + str(net.hosts[host]))
+        print("command to send: " + zk_cmd + "\n")
+        net.hosts[host].sendCmd(f'sudo {zk_path}/bin/zkServer.sh start &')
+        host += 1
 
-        # create broker commands
-        lamebroker_cmd = "python3 lamebroker.py 5000"
-        broker_cmd = "python3 broker.py 5559 5560"
-        for i in range(3):
-            cmd_str = lamebroker_cmd if str(args.strategy) == "direct" else broker_cmd
-            cmdz.append(cmd_str)
-            cmds.write(cmd_str)
+        # broker commands
+        if str(args.strategy) == "direct":
+            lamebroker_cmd = f'python3  {src_dir_path}/lamebroker.py 5000 &'
+            for i in range(3):
+                print(f'host # {net.hosts[host]}')
+                print(f'command to send: "{lamebroker_cmd}\n')
+                net.hosts[host].sendCmd(f'python3 {src_dir_path}/lamebroker.py 5000 &')
+                host += 1
+        else:
+            broker_cmd = f'python3 {src_dir_path}broker.py 5559 5560 &'
+            for i in range(3):
+                print("host #" + str(net.hosts[host]))
+                print(f'command to send: {broker_cmd}\n')
+                net.hosts[host].sendCmd(f'python3 {src_dir_path}/broker.py 5559 5560 &')
+                host += 1
 
-        #  next create the commands for the publishers
-        for i in range(args.publishers):
-            # extract subscriber topics
-            pub_tops = convertToStr(args.publishertopics)
-            if str(args.strategy) == "direct":
-                cmd_str = "python3 publisher_app.py " + str(args.strategy) + " \"" + str(args.ip) + ":" + \
-                          str(args.port) + "\"" + " 4000 " + pub_tops
-            else:
-                cmd_str = "python3 publisher_app.py " + str(args.strategy) + " \"" + str(args.ip) + ":" + \
-                          str(args.port) + "\" " + pub_tops
-            cmdz.append(cmd_str)
-            cmds.write(cmd_str)
+        # publisher commands
+        if str(args.strategy) == "direct":
+            for i in range(args.publishers):
+                # extract subscriber topics
+                pub_tops = convertToStr(args.publishertopics)
+                cmd_str = f'python3 {src_dir_path}/publisher_app.py {args.strategy} \"{args.ip}:{args.port}\" 4000 {pub_tops} &'
+                print("host #" + str(net.hosts[host]))
+                print(f'command to send: {cmd_str}\n')
+                net.hosts[host].sendCmd(
+                    f'python3 {src_dir_path}/publisher_app.py {args.strategy} \"{args.ip}:{args.port}\" 4000 {pub_tops} &')
+                host += 1
+        else:
+            for i in range(args.publishers):
+                # extract subscriber topics
+                pub_tops = convertToStr(args.publishertopics)
+                cmd_str = f'python3 {src_dir_path}/publisher_app.py {args.strategy} \"{args.ip}:{args.port}\" {pub_tops} &'
+                print("host #" + str(net.hosts[host]))
+                print(f'command to send: {cmd_str}\n')
+                net.hosts[host].sendCmd(
+                    f'python3 {src_dir_path}/publisher_app.py {args.strategy} \"{args.ip}:{args.port}\" {pub_tops} &')
+                host += 1
 
         #  next create the commands for subscribers
-        k = 4 + args.publishers  # starting index for subscriber hosts (zookeeper + brokers + publishers)
         for i in range(args.subscribers):
             # extract subscriber topics
             sub_tops = convertToStr(args.subscribertopics)
             # write command
-            cmd_str = "python3 subscriber_app.py " + str(args.strategy) + " \"" + str(args.ip) + ":" + \
-                      str(args.port) + "\" " + sub_tops
-            cmdz.append(cmd_str)
-            cmds.write(cmd_str)
-
-        # close the commands file.
-        cmds.close()
-        return cmdz
+            cmd_str = f'python3 {src_dir_path}/subscriber_app.py {args.strategy} \"{args.ip}:{args.port}\" {sub_tops} &'
+            print("host #" + str(net.hosts[host]))
+            print(f'command to send: {cmd_str}\n')
+            net.hosts[host].sendCmd(
+                f'python3 {src_dir_path}/subscriber_app.py {args.strategy} \"{args.ip}:{args.port}\" {sub_tops} &')
+            host += 1
 
     except:
         print("Unexpected error in run mininet:", sys.exc_info()[0])
@@ -155,33 +149,21 @@ def main():
     net.pingAll()
 
     # clean up data from previous zookeeper deploys
-    dir_path = '/tmp/zookeeper/version-2'
+    dir_path = "/tmp/zookeeper"
     try:
         shutil.rmtree(dir_path)
         print("Directory '%s' has been removed successfully" % dir_path)
     except OSError as e:
         print("Error: %s : %s" % (dir_path, e.strerror))
 
-    # print("Generating commands file to be sourced")
-    a = genCommandsFile(parsed_args)
-
-    for i in range(len(net.hosts)):
-        net.hosts[i].sendCmd(a[i])
+    print("Running deploy commands\n")
+    runCommands(net, parsed_args)
 
     # run the cli
     CLI(net)
 
-    # @NOTE@
-    # You should run the generated commands by going to the
-    # Mininet prompt on the CLI and typing:
-    #     source commands.txt
-    # Then, keep checking if all python jobs (except one) are completed
-    # You can look at the *.out files which have all the debugging data
-    # If there are errors in running the python code, these will also
-    # show up in the *.out files.
-
     # cleanup
-    # net.stop()
+    net.stop()
 
 
 if __name__ == '__main__':
