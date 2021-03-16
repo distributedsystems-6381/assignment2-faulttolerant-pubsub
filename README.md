@@ -69,12 +69,12 @@ _**NOTES**_
 - Stop all brokers, the subscriber will be notified of no brokers in the system and will shutdown
 	
 ***Test Scenarios for Broker Implementation:***
-	- Start couple of brokers, the broker with minimum sequence node will become the leader
-	- Run two instances of the publishers publishing "topic1" and "topic2"
-	- Start a subscriber listening for "topic2"
-	- Stop the current leader broker process, the second broker will become the leader
-	- The topic publishers and subscribers will be notified of the broker change and will reconnect to the new broker node and start receving the topics			- 
-	- Stop all brokers, the subscriber will shutdown with the message there's no broker in the system	
+- Start couple of brokers, the broker with minimum sequence node will become the leader
+- Run two instances of the publishers publishing "topic1" and "topic2"
+- Start a subscriber listening for "topic2"
+- Stop the current leader broker process, the second broker will become the leader
+- The topic publishers and subscribers will be notified of the broker change and will reconnect to the new broker node and start receving the topics			- 
+- Stop all brokers, the subscriber will shutdown with the message there's no broker in the system	
 
 ***Logging and Graph:*** 
    Running subscriber app generates a comma seperated log text file at the root of the project containing publisher_ip, subscriber_ip, message_id and time taken in milliseconds to receive the message from publisher. The graph and it's test data for the above test scenarios are located in the folder /perf-data-graphs
