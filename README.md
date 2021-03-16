@@ -60,13 +60,13 @@ _**NOTES**_
    - When the subscriber middleware receives topic data from the publisher related to the subscriber's registered topics, it passes the data to subscriber app by calling the registered callback function
 
 ***Test Scenarios for Direct Implementation:***
-	* Start one publisher publishing "topic1" and "topic2"
-	* Run two instances of the lamebroker process
-	* Start a subscriber listening for "topic2"
-	* Start another publisher publishing "topic2", lamebrokerbroker will refresh the list of publishers
-	* Kill one broker process by keyboard interrupt e.g. "Ctrl + C", the second broker will resume the role of the leader	
-	* The subscriber will be notified of the broker change and will refresh the publishers from the new broker	- 
-	* Stop all brokers, the subscriber will be notified of no brokers in the system and will shutdown
+- Start one publisher publishing "topic1" and "topic2"
+- Run two instances of the lamebroker process
+- Start a subscriber listening for "topic2"
+- Start another publisher publishing "topic2", lamebrokerbroker will refresh the list of publishers
+- Kill one broker process by keyboard interrupt e.g. "Ctrl + C", the second broker will resume the role of the leader	
+- The subscriber will be notified of the broker change and will refresh the publishers from the new broker
+- Stop all brokers, the subscriber will be notified of no brokers in the system and will shutdown
 	
 ***Test Scenarios for Broker Implementation:***
 	- Start couple of brokers, the broker with minimum sequence node will become the leader
