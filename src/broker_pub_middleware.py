@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 import host_ip_provider as hip
 
+
 class BrokerPubMiddleware():
     def __init__(self, broker):
         self.address = broker
