@@ -71,6 +71,14 @@ python3 `which mn`
      ```
      python3 lamebroker.py 3000
      ```
+ 1. Run subscriber by running command:    
+     ```
+     python3 subscriber_app.py direct "{zookeeper_ip_port}" "{topic_name_1}" "{topic_name_2}"....."{topic_name_n}"
+     ```
+     e.g.:
+     ```
+     python3 subscriber_app.py direct "10.0.0.1:2181" "topic1"
+     ``` 
 ***Command to run brokers, publishers and subscribers - broker implementation:***
 1. Change directories to your workspace and clone this project 
    ```
@@ -94,6 +102,14 @@ python3 `which mn`
      ```
      python3 publisher_app.py broker "10.0.0.1:2181" "topic1" "topic2"
      ```
+1. Run subscriber by running below command:     
+     ```
+     python3 subscriber_app.py broker "{zookeeper_ip_port}" "{topic_name_1}" "{topic_name_2}"....."{topic_name_n}"
+     ```
+     e.g.:
+     ```
+     python3 subscriber_app.py broker "10.0.0.1:2181" "topic1"
+     ``` 
      
 _**NOTES**_
    - By default, the publisher app publishes messages to 2 topics
